@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: foodiedeals
+      POSTGRES_PASSWORD: foodiedeals
+      POSTGRES_DB: foodiedeals
+    ports:
+      - "5433:5432"
+    volumes:
+      - foodiedeals-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U foodiedeals"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  foodiedeals-postgres:

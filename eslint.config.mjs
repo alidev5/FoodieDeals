@@ -1,0 +1,54 @@
+import js from "@eslint/js";
+import tseslint from "typescript-eslint";
+import importPlugin from "eslint-plugin-import";
+import prettier from "eslint-config-prettier";
+
+export default tseslint.config(
+  {
+    ignores: [
+      "**/dist/**",
+      "**/build/**",
+      "**/.expo/**",
+      "**/.turbo/**",
+      "**/node_modules/**",
+      "**/generated/**",
+      "**/coverage/**",
+      "**/web-build/**"
+    ]
+  },
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
+    plugins: { import: importPlugin },
+    rules: {
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/consistent-type-imports": "error",
+      "import/order": [
+        "warn",
+        {
+          groups: ["builtin", "external", "internal", "parent", "sibling", "index"],
+          "newlines-between": "always",
+          alphabetize: { order: "asc", caseInsensitive: true }
+        }
+      ],
+      "no-console": ["warn", { allow: ["warn", "error"] }]
+    }
+  },
+  {
+    files: ["apps/api/src/**/*.ts"],
+    rules: {
+      // Nest resolves constructor-injected providers from emitDecoratorMetadata,
+      // which needs a real (non type-only) import of the class.
+      "@typescript-eslint/consistent-type-imports": "off"
+    }
+  },
+  {
+    files: ["apps/api/scripts/**/*.ts"],
+    rules: {
+      // Standalone CLI scripts report progress to stdout directly.
+      "no-console": "off"
+    }
+  },
+  prettier
+);

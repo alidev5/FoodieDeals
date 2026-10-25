@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "FoodieDeals Restaurant",
+    "slug": "foodiedeals-restaurant",
+    "scheme": "foodiedeals-restaurant",
+    "version": "0.1.0",
+    "orientation": "landscape",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "backgroundColor": "#F7F3EE",
+    "icon": "./assets/icon.png",
+    "plugins": ["expo-router", "expo-secure-store"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.foodiedeals.restaurant"
+    },
+    "android": {
+      "package": "com.foodiedeals.restaurant",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1B1613"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      }
+    }
+  }
+}

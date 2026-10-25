@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "FoodieDeals",
+    "slug": "foodiedeals-customer",
+    "scheme": "foodiedeals",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "backgroundColor": "#F7F3EE",
+    "icon": "./assets/icon.png",
+    "plugins": ["expo-router", "expo-secure-store"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.foodiedeals.customer"
+    },
+    "android": {
+      "package": "com.foodiedeals.customer",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1B1613"
+      }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      }
+    }
+  }
+}

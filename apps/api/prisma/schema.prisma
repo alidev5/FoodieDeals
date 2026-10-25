@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DealType {
+  BOGO
+  PERCENT_OFF
+  FREE_ITEM
+  FIXED_PRICE_BUNDLE
+}
+
+enum OrderStatus {
+  WAITING
+  ACCEPTED
+  READY
+  PICKED_UP
+}
+
+model Restaurant {
+  id              String   @id @default(cuid())
+  name            String
+  demoKey         String   @unique
+  cuisine         String
+  isOpen          Boolean  @default(true)
+  heroPhoto       String?
+  address         String?
+  phone           String?
+  stripeAccountId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  menuItems     MenuItem[]
+  deals         Deal[]
+  orders        Order[]
+  dailyCounters DailyOrderCounter[]
+}
+
+model MenuItem {
+  id           String @id @default(cuid())
+  restaurantId String
+  name         String
+  priceCents   Int
+  photo        String?
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+}
+
+model Deal {
+  id           String   @id @default(cuid())
+  restaurantId String
+  name         String
+  type         DealType
+
+  percent          Int?
+  freeItemId       String?
+  bundleSize       Int?
+  bundlePriceCents Int?
+  eligibleItemIds  Json?
+
+  minSubtotalCents Int?
+  timeWindowStart  Int?
+  timeWindowEnd    Int?
+  firstVisitOnly   Boolean?
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+}
+
+model Customer {
+  id         String   @id @default(cuid())
+  deviceId   String   @unique
+  pickupName String
+  createdAt  DateTime @default(now())
+
+  orders Order[]
+
+  @@index([deviceId])
+}
+
+model Order {
+  id           String @id @default(cuid())
+  restaurantId String
+  customerId   String
+  orderNumber  Int
+  orderDate    DateTime
+  status       OrderStatus
+
+  subtotalCents           Int
+  discountCents           Int
+  taxCents                Int
+  totalCents              Int
+  platformFeeCents        Int
+  restaurantReceivesCents Int
+
+  appliedDealId         String?
+  appliedDealName       String?
+  stripePaymentIntentId String  @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  restaurant Restaurant  @relation(fields: [restaurantId], references: [id])
+  customer   Customer    @relation(fields: [customerId], references: [id])
+  items      OrderItem[]
+
+  @@unique([restaurantId, orderDate, orderNumber])
+  @@index([restaurantId, status])
+  @@index([customerId])
+}
+
+model OrderItem {
+  id         String @id @default(cuid())
+  orderId    String
+  menuItemId String
+  name       String
+  priceCents Int
+  quantity   Int
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+}
+
+model CheckoutSession {
+  id                    String   @id @default(cuid())
+  restaurantId          String
+  deviceId              String
+  stripePaymentIntentId String   @unique
+  status                String
+  createdAt             DateTime @default(now())
+
+  @@index([restaurantId])
+}
+
+model ProcessedStripeEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now())
+}
+
+model DailyOrderCounter {
+  id           String   @id @default(cuid())
+  restaurantId String
+  date         DateTime
+  lastNumber   Int      @default(0)
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@unique([restaurantId, date])
+}
