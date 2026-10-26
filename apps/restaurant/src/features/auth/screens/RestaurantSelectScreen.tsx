@@ -8,15 +8,17 @@ import {
   resolveFoodPhoto,
   StatusDot,
   Text,
+  TextField,
   useTheme,
   type IconName,
 } from "@foodiedeals/ui-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, ScrollView, TextInput, useWindowDimensions, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useLayoutWidth } from "../../../lib/zoom";
 import { useRestaurants } from "../../catalog/hooks/useRestaurants";
 import { useSaveRestaurantSession } from "../hooks/useRestaurantAuth";
 
@@ -190,7 +192,7 @@ function RestaurantOption({
 export function RestaurantSelectScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { width } = useWindowDimensions();
+  const width = useLayoutWidth();
   const { data: restaurants, isLoading, isError, refetch } = useRestaurants();
   const [selected, setSelected] = useState<Restaurant | null>(null);
   const [demoKey, setDemoKey] = useState("");
@@ -295,7 +297,7 @@ export function RestaurantSelectScreen() {
                     </Text>
                   </Pressable>
                 </View>
-                <TextInput
+                <TextField
                   value={demoKey}
                   onChangeText={(value) => {
                     setDemoKey(value);
@@ -303,20 +305,14 @@ export function RestaurantSelectScreen() {
                   }}
                   onSubmitEditing={handleContinue}
                   placeholder={`e.g. ${selected.demoKey}`}
-                  placeholderTextColor={theme.color.textTertiary}
                   autoCapitalize="characters"
+                  autoCorrect={false}
                   accessibilityLabel="Demo key"
-                  style={{
-                    backgroundColor: theme.color.surfaceMuted,
-                    borderRadius: theme.radius.md,
-                    borderWidth: 1.5,
-                    borderColor: error ? theme.color.accent : "transparent",
-                    paddingHorizontal: theme.spacing.lg,
-                    paddingVertical: theme.spacing.md + 2,
-                    fontSize: 16,
-                    letterSpacing: 1,
-                    color: theme.color.text,
-                  }}
+                  icon="key"
+                  tone="muted"
+                  size="lg"
+                  invalid={Boolean(error)}
+                  inputStyle={{ letterSpacing: 1 }}
                 />
                 {error ? <InlineAlert title="Wrong key" message={error} /> : null}
                 <Button

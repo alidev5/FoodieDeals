@@ -6,3 +6,4 @@ node_modules
 coverage
 web-build
 pnpm-lock.yaml
+supabase/functions

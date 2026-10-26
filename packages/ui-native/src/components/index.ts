@@ -24,5 +24,7 @@ export type { SuccessCheckProps } from "./SuccessCheck";
 export type { SheetProps } from "./Sheet";
 export { Text } from "./Text";
 export type { TextColor, TextComponentProps, TextVariant } from "./Text";
+export { TextField } from "./TextField";
+export type { TextFieldProps, TextFieldRef } from "./TextField";
 export { Toggle } from "./Toggle";
 export type { ToggleProps } from "./Toggle";

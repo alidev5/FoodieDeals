@@ -1,14 +1,16 @@
-node_modules
+.git
 **/node_modules
 **/dist
 **/.expo
 **/.turbo
 **/coverage
 **/web-build
-.git
+apps/*/android
+apps/*/ios
 design
 docs
-*.md
-**/.env
-**/.env.*
-!**/.env.example
+.claude
+issues
+# Secrets stay on the host: compose passes the Stripe keys in, and the API image uses .env.example.
+.env
+apps/api/.env

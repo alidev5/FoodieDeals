@@ -1,21 +1,27 @@
 import { z } from "zod";
 
 import { orderStatusSchema } from "./schemas";
+import { sha256Hex } from "./sha256";
 
-export const SOCKET_EVENTS = {
+export const REALTIME_EVENTS = {
   orderCreated: "order:created",
   orderStatusChanged: "order:status-changed",
   restaurantAvailabilityChanged: "restaurant:availability-changed",
-  joinOrderRoom: "join:order",
-  joinRestaurantRoom: "join:restaurant",
 } as const;
 
-export function restaurantRoom(restaurantId: string): string {
-  return `restaurant:${restaurantId}`;
+/** Open/paused changes are public, so every customer listens on one shared channel. */
+export const RESTAURANTS_TOPIC = "restaurants";
+
+/**
+ * Broadcast channels can't check who joins, so private channel names are derived from a
+ * secret only the rightful listener holds: the restaurant's key, or the ordering device's id.
+ */
+export function restaurantTopic(restaurantId: string, demoKey: string): string {
+  return `restaurant-${sha256Hex(`restaurant:${restaurantId}:${demoKey}`)}`;
 }
 
-export function orderRoom(orderId: string): string {
-  return `order:${orderId}`;
+export function orderTopic(orderId: string, deviceId: string): string {
+  return `order-${sha256Hex(`order:${orderId}:${deviceId}`)}`;
 }
 
 export const orderCreatedPayloadSchema = z.object({
@@ -40,15 +46,3 @@ export const restaurantAvailabilityChangedPayloadSchema = z.object({
 export type RestaurantAvailabilityChangedPayload = z.infer<
   typeof restaurantAvailabilityChangedPayloadSchema
 >;
-
-export const joinOrderRoomPayloadSchema = z.object({
-  orderId: z.string(),
-  deviceId: z.string(),
-});
-export type JoinOrderRoomPayload = z.infer<typeof joinOrderRoomPayloadSchema>;
-
-export const joinRestaurantRoomPayloadSchema = z.object({
-  restaurantId: z.string(),
-  demoKey: z.string(),
-});
-export type JoinRestaurantRoomPayload = z.infer<typeof joinRestaurantRoomPayloadSchema>;

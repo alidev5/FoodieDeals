@@ -1,9 +1,17 @@
 import { DEMO_CUSTOMERS, type DemoCustomer } from "@foodiedeals/shared";
-import { BrandMark, Button, Icon, Text, useTheme, type IconName } from "@foodiedeals/ui-native";
+import {
+  BrandMark,
+  Button,
+  Icon,
+  Text,
+  TextField,
+  useTheme,
+  type IconName,
+} from "@foodiedeals/ui-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { initials } from "../../../lib/display";
@@ -195,23 +203,18 @@ export function OnboardingScreen() {
           <Text variant="caption" color="onDark" style={{ opacity: 0.65, marginTop: -6 }}>
             The counter calls this out when your order is ready.
           </Text>
-          <TextInput
+          <TextField
             value={name}
             onChangeText={setName}
             onSubmitEditing={handleContinue}
             placeholder="e.g. Hamza M."
-            placeholderTextColor={theme.color.textTertiary}
             autoCapitalize="words"
+            autoComplete="name"
             returnKeyType="go"
             accessibilityLabel="Pickup name"
-            style={{
-              backgroundColor: theme.color.surface,
-              borderRadius: theme.radius.md,
-              paddingHorizontal: theme.spacing.lg,
-              paddingVertical: theme.spacing.md + 2,
-              fontSize: theme.type.scale.body.fontSize,
-              color: theme.color.text,
-            }}
+            icon="user"
+            tone="onDark"
+            size="lg"
           />
           <Button
             label={signIn.isPending && !pendingDemoId ? "Setting up…" : "Get started"}

@@ -4,9 +4,4 @@ packages:
 
 onlyBuiltDependencies:
   - esbuild
-  - "@nestjs/core"
-  - "@prisma/client"
-  - "@prisma/engines"
   - "@scarf/scarf"
-  - prisma
-

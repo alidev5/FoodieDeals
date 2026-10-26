@@ -1,5 +1,3 @@
-import type { ImageSourcePropType } from "react-native";
-
 import caesarSalad from "../../assets/food/caesar-salad.png";
 import cheesecakePhoto from "../../assets/food/cheesecake.png";
 import chiliNoodlesPhoto from "../../assets/food/chili-noodles.png";
@@ -14,7 +12,7 @@ import scallionPancake from "../../assets/food/scallion-pancake.png";
 import spaghettiPomodoro from "../../assets/food/spaghetti-pomodoro.png";
 import taroTeaPhoto from "../../assets/food/taro-tea.png";
 
-export const FOOD_PHOTOS: Record<string, ImageSourcePropType> = {
+const PHOTOS_BY_FILENAME = {
   "miso-ramen.png": ramenPhoto,
   "miso-ember-hero.png": ramenPhoto,
   "crispy-pork-gyoza.png": dumplingsPhoto,
@@ -58,6 +56,10 @@ export const FOOD_PHOTOS: Record<string, ImageSourcePropType> = {
   "taro-cloud-hero.png": taroTeaPhoto,
 };
 
-export function resolveFoodPhoto(filename: string | undefined): ImageSourcePropType | undefined {
+// Expo and React Native type bundled images differently (asset id vs. ImageSource), but Metro
+// resolves every one to the same numeric asset id, which both Image components accept.
+export const FOOD_PHOTOS = PHOTOS_BY_FILENAME as unknown as Record<string, number>;
+
+export function resolveFoodPhoto(filename: string | undefined): number | undefined {
   return filename ? FOOD_PHOTOS[filename] : undefined;
 }

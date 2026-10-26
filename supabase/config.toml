@@ -1,0 +1,7 @@
+project_id = "foodiedeals"
+
+[functions.api]
+entrypoint = "./functions/api/index.js"
+# The apps call the API without a Supabase login; restaurant routes check the restaurant key and
+# the Stripe webhook checks its signature, so the function does its own auth.
+verify_jwt = false

@@ -3,7 +3,10 @@ import { ApiError } from "@foodiedeals/ui-native";
 /** Turns API and Stripe failures into a sentence the checkout can show as-is. */
 export function describePaymentError(error: unknown): string {
   if (error instanceof ApiError) {
-    if (error.status >= 500) return "Something went wrong on our side. Please try again.";
+    // 503 carries a message meant for the person running the server, e.g. missing Stripe keys.
+    if (error.status >= 500 && error.status !== 503) {
+      return "Something went wrong on our side. Please try again.";
+    }
     try {
       const body = JSON.parse(error.message) as { message?: string | string[] };
       const message = Array.isArray(body.message) ? body.message[0] : body.message;

@@ -9,7 +9,7 @@ import {
 } from "@expo-google-fonts/plus-jakarta-sans";
 import {
   BootSplash,
-  SocketProvider,
+  RealtimeProvider,
   ThemeProvider,
   useMinimumDelay,
   useTheme,
@@ -23,8 +23,9 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { useRestaurantSession } from "../features/auth/hooks/useRestaurantAuth";
 import { OrderAlertsProvider } from "../features/orders/OrderAlertsProvider";
-import { API_URL } from "../lib/apiUrl";
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from "../lib/apiUrl";
 import { queryClient } from "../lib/queryClient";
+import { ZoomRoot } from "../lib/zoom";
 
 // The dashboard is information-dense, so it renders a step smaller than the phone app.
 const DASHBOARD_DENSITY = 0.86;
@@ -68,11 +69,13 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
-        <SocketProvider url={API_URL}>
+        <RealtimeProvider url={SUPABASE_URL} apiKey={SUPABASE_ANON_KEY}>
           <ThemeProvider density={DASHBOARD_DENSITY}>
-            <AppShell />
+            <ZoomRoot>
+              <AppShell />
+            </ZoomRoot>
           </ThemeProvider>
-        </SocketProvider>
+        </RealtimeProvider>
       </QueryClientProvider>
     </SafeAreaProvider>
   );

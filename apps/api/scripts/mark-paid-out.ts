@@ -1,4 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+import postgres from "postgres";
+
+import { requireDatabaseUrl } from "./paths";
 
 // Charges settle on the platform account, so restaurant payouts are sent by hand.
 // After sending one, run this to mark that restaurant's picked-up orders as paid out:
@@ -8,19 +10,20 @@ if (!restaurantId) {
   throw new Error("Usage: payouts:mark-paid <restaurantId>");
 }
 
-const prisma = new PrismaClient();
+const sql = postgres(requireDatabaseUrl(), { onnotice: () => {} });
 
 async function main() {
-  const where = { restaurantId, paidOutAt: null, status: "PICKED_UP" as const };
-  const owed = await prisma.order.aggregate({ where, _sum: { restaurantReceivesCents: true } });
-  const { count } = await prisma.order.updateMany({ where, data: { paidOutAt: new Date() } });
-  const amount = ((owed._sum.restaurantReceivesCents ?? 0) / 100).toFixed(2);
-  console.log(`Marked ${count} order(s) for ${restaurantId} as paid out ($${amount}).`);
+  const rows = await sql<{ restaurantReceivesCents: number }[]>`
+    UPDATE "Order" SET "paidOutAt" = now(), "updatedAt" = now()
+    WHERE "restaurantId" = ${restaurantId!} AND "paidOutAt" IS NULL AND "status" = 'PICKED_UP'
+    RETURNING "restaurantReceivesCents"`;
+  const amount = (rows.reduce((sum, row) => sum + row.restaurantReceivesCents, 0) / 100).toFixed(2);
+  console.log(`Marked ${rows.length} order(s) for ${restaurantId} as paid out ($${amount}).`);
 }
 
 main()
-  .catch((error) => {
+  .catch((error: unknown) => {
     console.error(error);
     process.exitCode = 1;
   })
-  .finally(() => prisma.$disconnect());
+  .finally(() => sql.end());

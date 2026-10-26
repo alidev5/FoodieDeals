@@ -21,7 +21,7 @@ export interface PayArgs {
 }
 
 export function usePayment() {
-  const { initPaymentSheet, presentPaymentSheet } = useStripe();
+  const { confirmPayment } = useStripe();
   const [status, setStatus] = useState<PaymentStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -32,23 +32,17 @@ export function usePayment() {
     try {
       const intent = await createPaymentIntent(args);
 
-      const initResult = await initPaymentSheet({
-        paymentIntentClientSecret: intent.clientSecret,
-        merchantDisplayName: "FoodieDeals",
-        defaultBillingDetails: { name: args.pickupName },
-      });
-      if (initResult.error) {
-        throw new Error(initResult.error.message);
-      }
-
       setStatus("authorizing");
-      const presentResult = await presentPaymentSheet();
-      if (presentResult.error) {
-        if (presentResult.error.code === "Canceled") {
+      const result = await confirmPayment(intent.clientSecret, {
+        paymentMethodType: "Card",
+        paymentMethodData: { billingDetails: { name: args.pickupName } },
+      });
+      if (result.error) {
+        if (result.error.code === "Canceled") {
           setStatus("idle");
           return null;
         }
-        throw new Error(presentResult.error.message);
+        throw new Error(result.error.message);
       }
 
       setStatus("confirming");

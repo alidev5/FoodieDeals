@@ -1,6 +1,5 @@
 declare module "*.png" {
-  import type { ImageSourcePropType } from "react-native";
-
-  const value: ImageSourcePropType;
+  // Metro registers every image as an asset and hands back its numeric id, on all platforms.
+  const value: number;
   export default value;
 }

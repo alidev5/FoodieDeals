@@ -10,9 +10,12 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://REPLACE-WITH-YOUR-RAILWAY-URL",
-        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_REPLACE_WITH_YOUR_KEY"
-      }
+        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_51UUMRKAp53erNFVpfScGQLnkppo0oAXZnHWQAw1Zw5OEXlYAPwWb7zoEYpX8D7qAXiBz7IUNgM8rzirB27G9z8Oz00a18glTdq",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://uiztlkjeqsiycqnmdyab.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_8oduTAn-0A3S-jQ6aBDjqg_6KKuqNsB",
+        "EXPO_PUBLIC_SUPABASE_FUNCTION_REGION": "ap-southeast-2"
+      },
+      "channel": "preview"
     },
     "production": {
       "autoIncrement": true

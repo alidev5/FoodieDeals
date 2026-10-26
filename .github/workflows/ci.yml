@@ -43,7 +43,9 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm --filter api exec prisma migrate deploy
+      - run: cp apps/api/.env.example apps/api/.env
+
+      - run: pnpm --filter @foodiedeals/api db:migrate
 
       - run: pnpm lint
 

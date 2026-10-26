@@ -9,7 +9,7 @@ import {
 } from "@expo-google-fonts/plus-jakarta-sans";
 import {
   BootSplash,
-  SocketProvider,
+  RealtimeProvider,
   ThemeProvider,
   useMinimumDelay,
   useTheme,
@@ -25,7 +25,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StartNewOrderSheet } from "../features/cart/components/StartNewOrderSheet";
 import { TabBar } from "../features/home/components/TabBar";
 import { usePickupName } from "../features/onboarding/hooks/usePickupName";
-import { API_URL } from "../lib/apiUrl";
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from "../lib/apiUrl";
 import { queryClient } from "../lib/queryClient";
 import { StripeProvider } from "../lib/StripeProvider";
 
@@ -84,11 +84,11 @@ export default function RootLayout() {
         merchantIdentifier="merchant.com.foodiedeals"
       >
         <QueryClientProvider client={queryClient}>
-          <SocketProvider url={API_URL}>
+          <RealtimeProvider url={SUPABASE_URL} apiKey={SUPABASE_ANON_KEY}>
             <ThemeProvider>
               <AppShell />
             </ThemeProvider>
-          </SocketProvider>
+          </RealtimeProvider>
         </QueryClientProvider>
       </StripeProvider>
     </SafeAreaProvider>

@@ -10,8 +10,11 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://REPLACE-WITH-YOUR-RAILWAY-URL"
-      }
+        "EXPO_PUBLIC_SUPABASE_URL": "https://uiztlkjeqsiycqnmdyab.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_8oduTAn-0A3S-jQ6aBDjqg_6KKuqNsB",
+        "EXPO_PUBLIC_SUPABASE_FUNCTION_REGION": "ap-southeast-2"
+      },
+      "channel": "preview"
     },
     "production": {
       "autoIncrement": true

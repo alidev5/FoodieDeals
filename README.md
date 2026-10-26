@@ -1,118 +1,174 @@
 # FoodieDeals
 
-A deals-first food pickup app: customers browse nearby restaurant deals, pay in
-app, and collect at the counter; restaurants track and advance paid orders in
-real time.
+It has two apps that share one backend:
 
-## Layout
+- **Customer app**: browse deals, order, pay by card and follow the order.
+- **Restaurant dashboard**: incoming orders, accept → ready → picked up, deals, menu and payouts.
 
-- `apps/customer` — Expo customer app (phone).
-- `apps/restaurant` — Expo restaurant app (tablet, also runs in a browser).
-- `apps/api` — NestJS API, Socket.IO, Prisma/PostgreSQL, Stripe (charges settle on the platform account; restaurants are paid out manually for now).
-- `packages/shared` — domain logic: money, pricing, deals, order state machine,
-  realtime event contracts.
-- `packages/ui-native` — shared React Native components, theme, API client and
-  socket provider used by both Expo apps.
-- `design/` — design tokens and Figma reference notes.
-- `docs/` — architecture, API, payments, realtime and demo documentation.
+## Try it online (nothing to install)
 
-Full product, architecture, design, and code-standard rules live in
-[`docs/ENGINEERING.md`](./docs/ENGINEERING.md).
+| What                                     | Link                                                                                                                                                                        |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Customer app                             | https://foodiedeals-customer.expo.app                                                                                                                                       |
+| Restaurant dashboard                     | https://foodiedeals-restaurant.expo.app                                                                                                                                     |
+| Android APKs (latest build on each page) | [Customer](https://expo.dev/accounts/alidev5/projects/foodiedeals-customer/builds) · [Restaurant](https://expo.dev/accounts/alidev5/projects/foodiedeals-restaurant/builds) |
 
-## Prerequisites
+## Run it on your computer
 
-- Node 20 (see `.nvmrc`)
-- pnpm 10
-- Docker (for local Postgres)
-- A Stripe account in **test mode** (for payments — see
-  [docs/PAYMENTS.md](./docs/PAYMENTS.md))
-- Expo Go on a phone, or Android/iOS simulators, to run the mobile apps
+Pick one option. **Option A** Runs everything on your machine,
+including the database and API, with one command.
 
-## Setup
+### Option A: Docker, fully local (recommended)
+
+**1. Install these first**
+
+- [Git](https://git-scm.com/downloads)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/). Open it once and wait until it says it's running.
+
+**2. Download the project**
 
 ```bash
-pnpm install
-docker-compose up -d
-
-cp apps/api/.env.example apps/api/.env
-# edit apps/api/.env and set STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET to your
-# own Stripe test-mode values (see docs/PAYMENTS.md)
-
-pnpm --filter api exec prisma migrate dev
-pnpm --filter api run seed
-
-cp apps/customer/.env.example apps/customer/.env
-cp apps/restaurant/.env.example apps/restaurant/.env
-# set EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY in apps/customer/.env
+git clone https://github.com/alidev5/FoodieDeals.git
+cd FoodieDeals
 ```
 
-The local Postgres container publishes on host port **5433**, not 5432, so it
-doesn't collide with a Postgres you may already have installed natively. CI
-uses its own disposable Postgres service on the default port, so this only
-matters for local development.
+**3. Add Stripe test keys (only needed for paying at checkout)**
 
-If you're testing on a physical phone, set `EXPO_PUBLIC_API_URL` in both
-`.env` files to your machine's LAN IP (e.g. `http://192.168.1.20:3000`)
-instead of `localhost`, since the phone can't resolve your laptop's
-`localhost`.
+Create a file named `.env` in the main `FoodieDeals` folder, the same folder as
+`docker-compose.yml`. Put these two lines in it:
 
-## Running
+```
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+```
+
+Replace the `...` with your own keys from the
+[Stripe dashboard](https://dashboard.stripe.com/test/apikeys) → Developers → API keys, with
+**Test mode** on. Both keys must come from the **same** Stripe account.
+
+Skip this step if you only want to browse. Everything else works without it, and checkout
+will say that payments aren't set up.
+
+**4. Start everything**
 
 ```bash
-pnpm dev
+docker compose up --build
 ```
 
-Runs every workspace's `dev` script through Turborepo: the Nest API on
-`:3000`, the customer app's Expo CLI, and the restaurant app's Expo CLI. Press
-`w` in either app's Expo CLI (or run `pnpm --filter <app> run web`) to open
-it in a browser instead of a simulator/device. The API enables CORS outside
-production so the web builds can reach it.
+The first run downloads and builds everything, which takes about 5–10 minutes. When it's
+ready, open:
 
-## Testing payments end to end
+|                      |                                  |
+| -------------------- | -------------------------------- |
+| Customer app         | http://localhost:8081            |
+| Restaurant dashboard | http://localhost:8082            |
+| API (for reference)  | http://localhost:3000/api/health |
 
-On the phone the card is entered in Stripe's PaymentSheet; in the browser the
-checkout shows Stripe Elements card fields. Either way, use Stripe's test card
-`4242 4242 4242 4242`, any future expiry and any CVC (`4000 0027 6000 3184`
-triggers 3D Secure, `4000 0000 0000 9995` is declined).
+This starts three containers: a PostgreSQL database, the API, and a web server for both apps.
+The database is created and filled with demo restaurants, menus and deals on the first start.
 
-After Stripe confirms the payment the app calls
-`POST /payments/intents/:id/sync`, which reads the intent back from Stripe and
-creates the order through the same idempotent path as the webhook. Payments
-therefore complete even when `stripe listen` isn't running; the webhook stays
-the primary path when it is. See [docs/PAYMENTS.md](./docs/PAYMENTS.md) for
-webhook forwarding, and `apps/api/scripts/send-test-webhook.ts` for sending a
-signed test event without a real payment.
-
-## Quality gates
+**Stop / restart / reset**
 
 ```bash
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm turbo run test:e2e   # apps/api Supertest + Socket.IO integration tests
+docker compose down            # stop (data is kept)
+docker compose up              # start again (fast; add --build after changing code or .env)
+docker compose down -v         # stop and delete the database (fresh demo data next start)
 ```
 
-Each fans out to every workspace via Turborepo. The e2e suite needs the local
-Postgres container running and a migrated, Stripe-configured `apps/api/.env`
-(it overrides the Stripe client with a fake in-process double, so it never
-calls the real Stripe API).
+### Option B: Node.js, using the hosted backend
 
-## Useful scripts
+Use this if you don't want Docker. The apps run on your machine but use the online backend
+(the same one as the links above), so payments already work.
 
-| Command                                                  | What it does                                                                              |
-| -------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `pnpm --filter api run seed`                             | Seeds the five demo restaurants, menus and deals                                          |
-| `pnpm --filter api run webhook:dev-test`                 | Sends one signed `payment_intent.succeeded` event to a running API, creating a real order |
-| `pnpm --filter api run payouts:mark-paid <restaurantId>` | Marks a restaurant's picked-up orders as paid out after you've sent its share             |
-| `pnpm --filter api run stripe:setup`                     | Creates Stripe test Connect accounts (only needed once automatic payouts are switched on) |
-| `pnpm --filter api exec prisma studio`                   | Browse the database                                                                       |
+Install [Git](https://git-scm.com/downloads) and [Node.js 20 or newer](https://nodejs.org), then:
 
-## Demo accounts
+```bash
+git clone https://github.com/alidev5/FoodieDeals.git
+cd FoodieDeals
+npm start
+```
 
-Customer app: the welcome screen offers two demo customers. Hamza M. has past
-pickups and monthly savings; Sara L. is a first-time customer, so first-visit
-deals apply. Both are created by `pnpm --filter api run seed`.
+Open http://localhost:8081 (customer) and http://localhost:8082 (restaurant). The first start
+takes a few minutes. Stop with `Ctrl+C`.
 
-Restaurant app: the sign-in screen lists every restaurant with its demo key
-(for example `MISO-0001` for Miso & Ember Kitchen) and can fill it in for you.
-The keys live in `packages/shared/src/seed/restaurants.ts`.
+## Using the demo
+
+1. Open the **restaurant dashboard** and sign in to a restaurant with its key:
+   `MISO-0001`, `LOTUS-0002`, `NAPOLI-0003`, `CEDAR-0004` or `TARO-0005` (Taro Cloud is paused).
+2. In another window, open the **customer app**, enter a name and order from that restaurant.
+3. Pay with the Stripe test card **4242 4242 4242 4242**, any future expiry date and any CVC.
+4. The order appears on the dashboard with a chime. Accept it and mark it ready, and the
+   customer's screen follows along.
+
+## Settings: what to set and where
+
+| Setting                                                                                             | File                                         | Needed for                                                                          |
+| --------------------------------------------------------------------------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `STRIPE_SECRET_KEY`                                                                                 | `.env` in the main `FoodieDeals` folder      | Docker (Option A): payments                                                         |
+| `STRIPE_PUBLISHABLE_KEY`                                                                            | `.env` in the main `FoodieDeals` folder      | Docker (Option A): payments; must be from the same Stripe account as the secret key |
+| `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `EXPO_PUBLIC_SUPABASE_FUNCTION_REGION` | `apps/customer/.env`, `apps/restaurant/.env` | Option B: which hosted backend to use. Already filled in.                           |
+| `EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY`                                                                | `apps/customer/.env`                         | Option B: card form. Already filled in.                                             |
+| `EXPO_PUBLIC_API_URL`                                                                               | `apps/customer/.env`, `apps/restaurant/.env` | Optional: use an API at another address instead of Supabase                         |
+
+The app `.env` files are created automatically from their `.env.example` files. Values that
+start with `EXPO_PUBLIC_` are visible in the browser by design. **Never put a secret key
+(`sk_…`) in an app `.env` file, and never commit any `.env` file.**
+
+## Troubleshooting
+
+- **"Port is already allocated" / "address already in use"**: another program is using port
+  8081, 8082, 3000 or 5433. Close it, or change the left-hand number of that port in
+  `docker-compose.yml` (e.g. `"9081:8081"`) and open the new address.
+- **Checkout says payments aren't set up**: add both Stripe keys to `.env` (step 3), then run
+  `docker compose up --build`.
+- **Payment fails right after adding keys**: the secret and publishable keys must come from
+  the same Stripe account and both be test-mode keys.
+- **Changes to `.env` don't show up**: run `docker compose up --build` so the apps are rebuilt.
+
+## Project layout
+
+- `apps/customer`: Expo customer app (Android, iOS, web)
+- `apps/restaurant`: Expo restaurant dashboard (tablet and web)
+- `apps/api`: the API (Hono). It runs in Docker locally and as a Supabase Edge Function when hosted.
+- `packages/shared`: domain logic (pricing, deals, order states, realtime events)
+- `packages/ui-native`: shared UI components, theme and realtime provider
+- `supabase/`: database migrations, seed data and the bundled edge function
+- `Dockerfile`, `docker-compose.yml`, `docker/`: the fully local setup
+
+## Deploying (hosted version)
+
+Backend on a new Supabase project:
+
+```bash
+npx pnpm@10.18.1 install
+npx pnpm@10.18.1 --filter @foodiedeals/api bundle   # builds supabase/functions/api/index.js
+npx supabase login
+npx supabase link --project-ref <project-ref>
+npx supabase db push --include-seed                  # tables + demo data (first time only)
+npx supabase functions deploy api --no-verify-jwt
+```
+
+Then add `STRIPE_SECRET_KEY` under that project's Edge Functions → Secrets. Put the project's
+URL, publishable key and database region into the app `.env` files and into the `preview`
+profile in each app's `eas.json`.
+
+Web apps (Expo Hosting), from `apps/customer` or `apps/restaurant`:
+
+```bash
+npx expo export -p web && npx eas-cli deploy --prod
+```
+
+Android APK (Expo EAS), from either app folder:
+
+```bash
+npx eas-cli build -p android --profile preview
+```
+
+iOS builds need a paid Apple Developer account.
+
+## Development
+
+```bash
+npx pnpm@10.18.1 install
+npx pnpm@10.18.1 lint && npx pnpm@10.18.1 typecheck && npx pnpm@10.18.1 test
+```

@@ -1,6 +1,5 @@
-import { useWindowDimensions } from "react-native";
-
 import { useSidebarCollapsed } from "./sidebarPreference";
+import { useLayoutWidth } from "./zoom";
 
 /** Below this the sidebar is always an icon rail, whatever the saved preference. */
 const FORCE_RAIL_BELOW = 1024;
@@ -8,7 +7,7 @@ const FORCE_RAIL_BELOW = 1024;
 const STACK_BELOW = 900;
 
 export function useDashboardLayout() {
-  const { width } = useWindowDimensions();
+  const width = useLayoutWidth();
   const isCollapsed = useSidebarCollapsed();
   const isRailForced = width < FORCE_RAIL_BELOW;
   return {

@@ -1,9 +1,9 @@
 import { addLine, computeQuote, createEmptyCart, SEED_RESTAURANTS } from "@foodiedeals/shared";
 import Stripe from "stripe";
 
-import { encodePaymentIntentMetadata } from "../src/checkout/payment-intent-metadata";
+import { encodePaymentIntentMetadata } from "../src/paymentIntentMetadata";
 
-const apiUrl = process.env.API_URL ?? "http://localhost:3000";
+const apiUrl = process.env.API_URL ?? "http://localhost:3000/api";
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 if (!webhookSecret) {
   throw new Error("STRIPE_WEBHOOK_SECRET must be set to sign the test event");
@@ -61,8 +61,7 @@ function buildEvent() {
 }
 
 async function main() {
-  const event = buildEvent();
-  const payload = JSON.stringify(event);
+  const payload = JSON.stringify(buildEvent());
   const signature = Stripe.webhooks.generateTestHeaderString({ payload, secret: webhookSecret! });
 
   const response = await fetch(`${apiUrl}/payments/webhook`, {

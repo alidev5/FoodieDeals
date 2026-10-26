@@ -195,7 +195,6 @@ export function OrdersScreen() {
                   data={visibleOrders}
                   extraData={`${selectedId}:${highlightedOrderId}`}
                   keyExtractor={(order) => order.id}
-                  estimatedItemSize={140}
                   contentContainerStyle={{ paddingBottom: theme.spacing.lg }}
                   ItemSeparatorComponent={() => <View style={{ height: theme.spacing.md }} />}
                   ListEmptyComponent={emptyList}

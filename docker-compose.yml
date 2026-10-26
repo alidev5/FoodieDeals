@@ -1,3 +1,9 @@
+# Everything local: `docker compose up --build`
+#   customer app   http://localhost:8081
+#   restaurant app http://localhost:8082
+#   API            http://localhost:3000/api
+# Stripe keys for payments come from a `.env` file next to this one (see .env.example).
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -15,6 +21,36 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  api:
+    build:
+      context: .
+      target: api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://foodiedeals:foodiedeals@postgres:5432/foodiedeals
+      PORT: "3000"
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_not_set}
+      STRIPE_WEBHOOK_SECRET: ""
+    ports:
+      - "3000:3000"
+
+  web:
+    build:
+      context: .
+      target: web
+      args:
+        API_URL: http://localhost:3000/api
+        STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "8081:8081"
+      - "8082:8082"
 
 volumes:
   foodiedeals-postgres:

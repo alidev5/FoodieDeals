@@ -1,14 +1,18 @@
 import { formatCents } from "@foodiedeals/shared";
 import { Icon, Text, useTheme } from "@foodiedeals/ui-native";
 import { usePathname, useRouter } from "expo-router";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Animated, Easing, Platform, Pressable, View } from "react-native";
 
+import type { NewOrderAlert } from "../hooks/useOrderAlerts";
 import { useOrders } from "../hooks/useOrders";
-import type { NewOrderAlert } from "../hooks/useOrdersSocket";
 
 const AUTO_DISMISS_MS = 9000;
+const ENTER_MS = 460;
+const EXIT_MS = 240;
 const USE_NATIVE_DRIVER = Platform.OS !== "web";
+/** A soft "ease-out-quint": quick to arrive, gentle to settle. */
+const EASE_OUT = Easing.bezier(0.22, 1, 0.36, 1);
 
 function Toast({ alert, onDismiss }: { alert: NewOrderAlert; onDismiss: () => void }) {
   const theme = useTheme();
@@ -18,22 +22,48 @@ function Toast({ alert, onDismiss }: { alert: NewOrderAlert; onDismiss: () => vo
   const entrance = useRef(new Animated.Value(0)).current;
   const countdown = useRef(new Animated.Value(1)).current;
   const onDismissRef = useRef(onDismiss);
+  const isLeavingRef = useRef(false);
   onDismissRef.current = onDismiss;
 
+  // Slides back up and fades before the toast is removed, so it never just blinks out.
+  const leave = useCallback(
+    (then?: () => void) => {
+      if (isLeavingRef.current) return;
+      isLeavingRef.current = true;
+      countdown.stopAnimation();
+      Animated.timing(entrance, {
+        toValue: 0,
+        duration: EXIT_MS,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: USE_NATIVE_DRIVER,
+      }).start(() => {
+        then?.();
+        onDismissRef.current();
+      });
+    },
+    [countdown, entrance],
+  );
+
+  const runCountdown = useCallback(() => {
+    countdown.stopAnimation((remaining) => {
+      Animated.timing(countdown, {
+        toValue: 0,
+        duration: AUTO_DISMISS_MS * remaining,
+        easing: Easing.linear,
+        useNativeDriver: false,
+      }).start(({ finished }) => finished && leave());
+    });
+  }, [countdown, leave]);
+
   useEffect(() => {
-    Animated.spring(entrance, {
+    Animated.timing(entrance, {
       toValue: 1,
-      friction: 8,
-      tension: 70,
+      duration: ENTER_MS,
+      easing: EASE_OUT,
       useNativeDriver: USE_NATIVE_DRIVER,
     }).start();
-    Animated.timing(countdown, {
-      toValue: 0,
-      duration: AUTO_DISMISS_MS,
-      easing: Easing.linear,
-      useNativeDriver: false,
-    }).start(({ finished }) => finished && onDismissRef.current());
-  }, [entrance, countdown]);
+    runCountdown();
+  }, [entrance, runCountdown]);
 
   const itemCount = order?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
   const detail = order
@@ -44,6 +74,13 @@ function Toast({ alert, onDismiss }: { alert: NewOrderAlert; onDismiss: () => vo
     <Animated.View
       accessibilityRole="alert"
       accessibilityLiveRegion="assertive"
+      // Hovering pauses the countdown so a toast never disappears while it's being read.
+      {...(Platform.OS === "web"
+        ? {
+            onMouseEnter: () => !isLeavingRef.current && countdown.stopAnimation(),
+            onMouseLeave: () => !isLeavingRef.current && runCountdown(),
+          }
+        : null)}
       style={{
         width: 360,
         maxWidth: "100%",
@@ -59,7 +96,8 @@ function Toast({ alert, onDismiss }: { alert: NewOrderAlert; onDismiss: () => vo
         elevation: 14,
         opacity: entrance,
         transform: [
-          { translateX: entrance.interpolate({ inputRange: [0, 1], outputRange: [80, 0] }) },
+          { translateY: entrance.interpolate({ inputRange: [0, 1], outputRange: [-28, 0] }) },
+          { scale: entrance.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1] }) },
         ],
       }}
     >
@@ -92,7 +130,7 @@ function Toast({ alert, onDismiss }: { alert: NewOrderAlert; onDismiss: () => vo
           </Text>
         </View>
         <Pressable
-          onPress={onDismiss}
+          onPress={() => leave()}
           accessibilityLabel="Dismiss"
           hitSlop={8}
           style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, alignSelf: "flex-start" })}
@@ -110,8 +148,8 @@ function Toast({ alert, onDismiss }: { alert: NewOrderAlert; onDismiss: () => vo
       >
         <Pressable
           onPress={() => {
-            onDismiss();
             router.replace(`/orders?orderId=${alert.orderId}`);
+            leave();
           }}
           style={({ pressed }) => ({
             flex: 1,
@@ -159,12 +197,14 @@ export function NewOrderToasts({ alerts, onDismiss }: NewOrderToastsProps) {
     <View
       pointerEvents="box-none"
       style={{
-        position: "absolute",
+        // Fixed on web so the stack stays pinned to the window's top-right while the page scrolls.
+        position: (Platform.OS === "web" ? "fixed" : "absolute") as "absolute",
         top: theme.spacing.xl,
         right: theme.spacing.xl,
         left: theme.spacing.xl,
         alignItems: "flex-end",
         gap: theme.spacing.md,
+        zIndex: 1000,
       }}
     >
       {alerts.map((alert) => (

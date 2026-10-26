@@ -1,9 +1,8 @@
 import { DEMO_PICKUP_AREA, restaurantDisplayExtras, type Restaurant } from "@foodiedeals/shared";
-import { Icon, IconButton, Text, useTheme } from "@foodiedeals/ui-native";
-import { FlashList } from "@shopify/flash-list";
+import { Icon, IconButton, Text, TextField, useTheme } from "@foodiedeals/ui-native";
 import { useRouter } from "expo-router";
-import { useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, TextInput, View } from "react-native";
+import { useMemo, useRef, useState, type ComponentRef } from "react";
+import { ActivityIndicator, Pressable, ScrollView, View, type TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { initials } from "../../../lib/display";
@@ -68,7 +67,7 @@ function SectionHeader({
 export function HomeScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const searchRef = useRef<TextInput>(null);
+  const searchRef = useRef<ComponentRef<typeof TextInput>>(null);
   const { data: restaurants, isLoading } = useRestaurants();
   const { data: pickupName } = usePickupName();
   const { data: realSummary } = useCustomerSummary();
@@ -104,7 +103,7 @@ export function HomeScreen() {
   const firstName = pickupName?.split(" ")[0];
 
   const header = (
-    <View style={{ gap: theme.spacing.xl, paddingBottom: theme.spacing.lg }}>
+    <View style={{ gap: theme.spacing.xl }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <View style={{ gap: 2 }}>
           <Text variant="caption" color="tertiary">
@@ -159,48 +158,35 @@ export function HomeScreen() {
         </View>
       </View>
 
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          gap: theme.spacing.sm,
-          backgroundColor: theme.color.surface,
-          borderRadius: theme.radius.xl,
-          paddingLeft: theme.spacing.lg,
-          padding: theme.spacing.xs + 2,
-        }}
-      >
-        <Icon name="search" size={18} color={theme.color.textTertiary} />
-        <TextInput
-          ref={searchRef}
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Search dumplings, ramen, pizza…"
-          placeholderTextColor={theme.color.textTertiary}
-          style={{
-            flex: 1,
-            paddingVertical: theme.spacing.md,
-            color: theme.color.text,
-            fontSize: 15,
-          }}
-        />
-        {search ? (
-          <IconButton
-            icon="x"
-            size={40}
-            accessibilityLabel="Clear search"
-            onPress={() => setSearch("")}
-          />
-        ) : (
-          <IconButton
-            icon="sliders"
-            variant="dark"
-            size={40}
-            accessibilityLabel="Search"
-            onPress={() => searchRef.current?.focus()}
-          />
-        )}
-      </View>
+      <TextField
+        ref={searchRef}
+        value={search}
+        onChangeText={setSearch}
+        placeholder="Search dumplings, ramen, pizza…"
+        accessibilityLabel="Search restaurants and dishes"
+        returnKeyType="search"
+        icon="search"
+        size="lg"
+        style={{ borderRadius: theme.radius.xl }}
+        trailing={
+          search ? (
+            <IconButton
+              icon="x"
+              size={40}
+              accessibilityLabel="Clear search"
+              onPress={() => setSearch("")}
+            />
+          ) : (
+            <IconButton
+              icon="sliders"
+              variant="dark"
+              size={40}
+              accessibilityLabel="Search"
+              onPress={() => searchRef.current?.focus()}
+            />
+          )
+        }
+      />
 
       <SavingsBanner summary={summary} />
 
@@ -234,35 +220,38 @@ export function HomeScreen() {
       style={{ flex: 1, backgroundColor: theme.color.background }}
       edges={["top", "left", "right"]}
     >
-      <FlashList
-        data={isLoading ? [] : filtered}
-        keyExtractor={(item) => item.id}
-        estimatedItemSize={290}
+      {/* A plain ScrollView, not a recycling list: the search field in the header must not be
+          remounted (and lose focus) when the keyboard changes the screen size. */}
+      <ScrollView
         keyboardShouldPersistTaps="handled"
-        ListHeaderComponent={header}
-        ListEmptyComponent={
-          isLoading ? (
-            <ActivityIndicator color={theme.color.accent} />
-          ) : (
-            <Text
-              variant="body"
-              color="secondary"
-              style={{ textAlign: "center", marginTop: theme.spacing.xl }}
-            >
-              No restaurants match that yet.
-            </Text>
-          )
-        }
         contentContainerStyle={{
           paddingHorizontal: theme.spacing.xl,
           paddingTop: theme.spacing.lg,
           paddingBottom: TAB_BAR_CLEARANCE,
+          gap: theme.spacing.lg,
         }}
-        ItemSeparatorComponent={() => <View style={{ height: theme.spacing.lg }} />}
-        renderItem={({ item }) => (
-          <RestaurantCard restaurant={item} onPress={() => router.push(`/restaurant/${item.id}`)} />
+      >
+        {header}
+        {isLoading ? (
+          <ActivityIndicator color={theme.color.accent} />
+        ) : filtered.length === 0 ? (
+          <Text
+            variant="body"
+            color="secondary"
+            style={{ textAlign: "center", marginTop: theme.spacing.xl }}
+          >
+            No restaurants match that yet.
+          </Text>
+        ) : (
+          filtered.map((item) => (
+            <RestaurantCard
+              key={item.id}
+              restaurant={item}
+              onPress={() => router.push(`/restaurant/${item.id}`)}
+            />
+          ))
         )}
-      />
+      </ScrollView>
     </SafeAreaView>
   );
 }

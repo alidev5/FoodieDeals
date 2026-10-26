@@ -7,6 +7,7 @@ import {
   Icon,
   InlineAlert,
   Text,
+  TextField,
   useTheme,
   type IconName,
 } from "@foodiedeals/ui-native";
@@ -14,7 +15,7 @@ import { Image } from "expo-image";
 import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
 import { useState, type ReactNode } from "react";
-import { FlatList, Pressable, ScrollView, TextInput, View } from "react-native";
+import { FlatList, Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { initials, streetAddress } from "../../../lib/display";
@@ -324,23 +325,16 @@ export function ProfileScreen() {
             Used on new orders. Say it at the counter to collect.
           </Text>
           <View style={{ flexDirection: "row", gap: theme.spacing.sm, alignItems: "center" }}>
-            <TextInput
+            <TextField
               value={value}
               onChangeText={setDraft}
               autoCapitalize="words"
+              autoComplete="name"
               placeholder="Hamza M."
               accessibilityLabel="Pickup name"
-              placeholderTextColor={theme.color.textTertiary}
-              style={{
-                flex: 1,
-                minWidth: 0,
-                backgroundColor: theme.color.surfaceMuted,
-                borderRadius: theme.radius.md,
-                paddingHorizontal: theme.spacing.lg,
-                paddingVertical: theme.spacing.md,
-                fontSize: 16,
-                color: theme.color.text,
-              }}
+              icon="user"
+              tone="muted"
+              style={{ flex: 1 }}
             />
             <Button
               label="Save"

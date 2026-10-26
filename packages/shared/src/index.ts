@@ -5,6 +5,7 @@ export * from "./deals";
 export * from "./pricing";
 export * from "./orders";
 export * from "./realtime";
+export * from "./sha256";
 export * from "./schemas";
 export * from "./theme";
 export { SEED_RESTAURANTS } from "./seed/restaurants";

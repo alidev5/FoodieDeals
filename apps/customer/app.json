@@ -9,7 +9,7 @@
     "newArchEnabled": true,
     "backgroundColor": "#F7F3EE",
     "icon": "./assets/icon.png",
-    "plugins": ["expo-router", "expo-secure-store"],
+    "plugins": ["expo-router", "expo-secure-store", "./plugins/withoutStripePushProvisioning"],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.foodiedeals.customer"
@@ -18,17 +18,32 @@
       "package": "com.foodiedeals.customer",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1B1613"
-      }
+        "backgroundColor": "#FFC53D"
+      },
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "bundler": "metro",
-      "output": "static"
+      "output": "single",
+      "favicon": "./assets/favicon.png"
     },
     "extra": {
       "router": {
-        "origin": false
+        "origin": false,
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "bff52a1c-14dd-4710-89f4-2feb8569d100"
       }
+    },
+    "owner": "alidev5",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/bff52a1c-14dd-4710-89f4-2feb8569d100"
     }
   }
 }

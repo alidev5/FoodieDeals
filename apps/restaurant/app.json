@@ -18,17 +18,31 @@
       "package": "com.foodiedeals.restaurant",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1B1613"
+        "backgroundColor": "#FFC53D"
       }
     },
     "web": {
       "bundler": "metro",
-      "output": "static"
+      "output": "single",
+      "favicon": "./assets/favicon.png"
     },
     "extra": {
       "router": {
-        "origin": false
+        "origin": false,
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "9a57e1d9-ae27-4a7f-816a-469f32d8fbaa"
       }
+    },
+    "owner": "alidev5",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/9a57e1d9-ae27-4a7f-816a-469f32d8fbaa"
     }
   }
 }

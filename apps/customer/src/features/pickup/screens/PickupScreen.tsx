@@ -9,7 +9,7 @@ import { ScreenHeader } from "../../../components/ScreenHeader";
 import { formatClockTime, shortDealName, shortRestaurantName } from "../../../lib/display";
 import { TAB_BAR_CLEARANCE } from "../../home/components/TabBar";
 import { useOrder } from "../../orders/hooks/useOrder";
-import { useOrderSocket } from "../../orders/hooks/useOrderSocket";
+import { useOrderUpdates } from "../../orders/hooks/useOrderUpdates";
 import { PickupNameCard } from "../components/PickupNameCard";
 import { RestaurantContactCard } from "../components/RestaurantContactCard";
 import { Tracker } from "../components/Tracker";
@@ -29,7 +29,7 @@ export function PickupScreen({ orderId }: PickupScreenProps) {
   const theme = useTheme();
   const router = useRouter();
   const { data: order, isLoading } = useOrder(orderId);
-  useOrderSocket(orderId);
+  useOrderUpdates(orderId);
 
   if (isLoading || !order) {
     return (

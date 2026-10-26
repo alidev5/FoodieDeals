@@ -1,4 +1,5 @@
 import type { OrderStatus } from "@foodiedeals/shared";
+import { joinApiUrl } from "@foodiedeals/ui-native";
 
 import { API_URL } from "./apiUrl";
 
@@ -54,7 +55,7 @@ class RestaurantApiError extends Error {
 }
 
 async function request<T>(path: string, demoKey: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetch(joinApiUrl(API_URL, path), {
     ...init,
     headers: {
       "Content-Type": "application/json",

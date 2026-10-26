@@ -1,5 +1,12 @@
 import type { ReactNode } from "react";
-import { Pressable, View, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
+import {
+  Platform,
+  Pressable,
+  View,
+  type PressableProps,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 
 import { useTheme } from "../theme";
 
@@ -18,6 +25,16 @@ export interface ButtonProps extends Omit<PressableProps, "style"> {
   trailing?: ReactNode;
   style?: StyleProp<ViewStyle>;
 }
+
+const WEB_TRANSITION =
+  Platform.OS === "web"
+    ? ({
+        transitionProperty: "transform, opacity, box-shadow, background-color",
+        transitionDuration: "160ms",
+        transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
+        cursor: "pointer",
+      } as ViewStyle)
+    : null;
 
 export function Button({
   label,
@@ -48,7 +65,7 @@ export function Button({
     <Pressable
       disabled={disabled}
       accessibilityRole="button"
-      style={({ pressed }) => [
+      style={({ pressed, hovered }) => [
         {
           flexDirection: "row",
           backgroundColor: background[variant],
@@ -60,8 +77,19 @@ export function Button({
           alignItems: "center",
           justifyContent: trailing ? "space-between" : "center",
           gap: theme.spacing.sm,
-          opacity: disabled ? 0.5 : pressed ? 0.88 : 1,
+          // Disabled reads as quiet rather than broken: dimmed, but still clearly the same button.
+          opacity: disabled ? 0.42 : pressed ? 0.9 : 1,
+          transform: [{ scale: pressed && !disabled ? 0.98 : 1 }],
         },
+        WEB_TRANSITION,
+        Platform.OS === "web" && disabled
+          ? ({ cursor: "not-allowed" } as unknown as ViewStyle)
+          : null,
+        hovered && !disabled && !pressed
+          ? Platform.OS === "web"
+            ? ({ boxShadow: "0 8px 22px rgba(27, 22, 19, 0.16)" } as ViewStyle)
+            : null
+          : null,
         variant === "accent" && isLarge
           ? {
               shadowColor: theme.color.accent,

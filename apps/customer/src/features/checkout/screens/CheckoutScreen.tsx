@@ -14,10 +14,11 @@ import {
   Text,
   useTheme,
 } from "@foodiedeals/ui-native";
+import { useQueryClient } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { Platform, Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ScreenHeader } from "../../../components/ScreenHeader";
@@ -27,6 +28,7 @@ import { IS_STRIPE_TEST_MODE } from "../../../lib/stripeKey";
 import { useDeviceId } from "../../../lib/useDeviceId";
 import { useCartLines, useCartStore } from "../../cart/store";
 import { useRestaurant } from "../../catalog/hooks";
+import { refreshCustomerActivity } from "../../home/hooks/useCustomerSummary";
 import { usePickupName } from "../../onboarding/hooks/usePickupName";
 import { DealList } from "../components/DealList";
 import { PaymentCardForm } from "../components/PaymentCardForm";
@@ -110,6 +112,7 @@ function PickupOption({
 export function CheckoutScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const lines = useCartLines();
   const cart = useCartStore((state) => state.cart);
@@ -124,8 +127,6 @@ export function CheckoutScreen() {
   const handleCardComplete = useCallback((complete: boolean) => setCardComplete(complete), []);
 
   const isBusy = status === "processing" || status === "authorizing" || status === "confirming";
-  // On native the PaymentSheet is on screen while authorizing, so the overlay waits behind it.
-  const overlayStatus = Platform.OS !== "web" && status === "authorizing" ? "idle" : status;
   const itemCount = lines.reduce((sum, line) => sum + line.quantity, 0);
 
   const handlePay = async () => {
@@ -139,6 +140,7 @@ export function CheckoutScreen() {
     });
 
     if (orderId) {
+      refreshCustomerActivity(queryClient);
       clearCart();
       router.replace(`/order-success?orderId=${orderId}`);
     }
@@ -409,7 +411,7 @@ export function CheckoutScreen() {
         </Text>
       </View>
       <PaymentProgressOverlay
-        status={overlayStatus}
+        status={status}
         totalLabel={quote ? formatCents(quote.totalCents) : "now"}
       />
     </SafeAreaView>

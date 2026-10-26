@@ -5,11 +5,20 @@ import {
   restaurantDisplayExtras,
   type MenuItem,
 } from "@foodiedeals/shared";
-import { Icon, IconButton, Text, useTheme, type IconName } from "@foodiedeals/ui-native";
+import {
+  Icon,
+  IconButton,
+  Text,
+  TextField,
+  useTheme,
+  type IconName,
+  type TextFieldRef,
+} from "@foodiedeals/ui-native";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Share, TextInput, View } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Pressable, ScrollView, Share, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
@@ -91,6 +100,16 @@ export function RestaurantScreen() {
   const toggleFavorite = useFavoritesStore((state) => state.toggle);
   const [category, setCategory] = useState("Popular");
   const [search, setSearch] = useState<string | null>(null);
+  const searchRef = useRef<TextFieldRef>(null);
+  const isSearchOpen = search !== null;
+
+  // Focus once the field is laid out; autoFocus on mount can fire too early on Android and the
+  // keyboard then closes again straight away.
+  useEffect(() => {
+    if (!isSearchOpen) return;
+    const timer = setTimeout(() => searchRef.current?.focus(), 150);
+    return () => clearTimeout(timer);
+  }, [isSearchOpen]);
 
   const extras = restaurantDisplayExtras(id ?? "");
   const categories = useMemo(
@@ -154,6 +173,7 @@ export function RestaurantScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.color.surface }}>
+      <StatusBar style="light" />
       <ScrollView
         contentContainerStyle={{
           paddingBottom: showCartBar ? TAB_BAR_CLEARANCE + 110 : TAB_BAR_CLEARANCE,
@@ -307,26 +327,17 @@ export function RestaurantScreen() {
           ) : null}
 
           {search !== null ? (
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: theme.spacing.sm,
-                backgroundColor: theme.color.surfaceMuted,
-                borderRadius: theme.radius.pill,
-                paddingHorizontal: theme.spacing.lg,
-              }}
-            >
-              <Icon name="search" size={16} color={theme.color.textTertiary} />
-              <TextInput
-                autoFocus
-                value={search}
-                onChangeText={setSearch}
-                placeholder={`Search ${restaurant.name}`}
-                placeholderTextColor={theme.color.textTertiary}
-                style={{ flex: 1, paddingVertical: theme.spacing.md, color: theme.color.text }}
-              />
-            </View>
+            <TextField
+              ref={searchRef}
+              value={search}
+              onChangeText={setSearch}
+              placeholder={`Search ${restaurant.name}`}
+              accessibilityLabel={`Search the ${restaurant.name} menu`}
+              returnKeyType="search"
+              icon="search"
+              tone="muted"
+              shape="pill"
+            />
           ) : (
             <ScrollView
               horizontal
@@ -401,6 +412,18 @@ export function RestaurantScreen() {
           onViewOrder={() => router.push("/checkout")}
         />
       ) : null}
+      {/* Keeps the photo and the page from scrolling under the phone's status bar. */}
+      <View
+        pointerEvents="none"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: insets.top,
+          backgroundColor: theme.color.surfaceDark,
+        }}
+      />
     </View>
   );
 }
