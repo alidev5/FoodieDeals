@@ -7,12 +7,15 @@
       "outputs": ["dist/**"]
     },
     "@foodiedeals/ui-native#build": {
+      "dependsOn": ["^build"],
       "outputs": []
     },
     "@foodiedeals/customer#build": {
+      "dependsOn": ["^build"],
       "outputs": []
     },
     "@foodiedeals/restaurant#build": {
+      "dependsOn": ["^build"],
       "outputs": []
     },
     "dev": {
