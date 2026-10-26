@@ -19,24 +19,24 @@ function renderPanel(orderId: string, onAdvance: (orderId: string) => void = () 
 }
 
 describe("OrderDetailPanel action button", () => {
-  it("shows Accept for a waiting order and advances it on press", () => {
+  it("shows Accept order for a waiting order and advances it on press", () => {
     const onAdvance = jest.fn();
     renderPanel("order-1", onAdvance);
 
-    fireEvent.press(screen.getByText("Accept"));
+    fireEvent.press(screen.getByRole("button", { name: /Accept order/ }));
     expect(onAdvance).toHaveBeenCalledWith("order-1");
   });
 
   it("shows Mark ready for an accepted order", () => {
     renderPanel("order-3");
-    expect(screen.getByText("Mark ready")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Mark ready/ })).toBeTruthy();
   });
 
-  it("shows Picked up for a ready order and advances it on press", () => {
+  it("shows Mark picked up for a ready order and advances it on press", () => {
     const onAdvance = jest.fn();
     renderPanel("order-4", onAdvance);
 
-    fireEvent.press(screen.getByText("Picked up"));
+    fireEvent.press(screen.getByRole("button", { name: /Mark picked up/ }));
     expect(onAdvance).toHaveBeenCalledWith("order-4");
   });
 
@@ -44,8 +44,13 @@ describe("OrderDetailPanel action button", () => {
     const onAdvance = jest.fn();
     renderPanel("order-5", onAdvance);
 
-    fireEvent.press(screen.getByText("Picked up"));
+    fireEvent.press(screen.getByRole("button", { name: /Picked up/ }));
     expect(onAdvance).not.toHaveBeenCalled();
+  });
+
+  it("shows the restaurant's payout share as pending until FoodieDeals pays out", () => {
+    renderPanel("order-1");
+    expect(screen.getByText(/payout pending/)).toBeTruthy();
   });
 
   it("prompts selection when no order is active", () => {
@@ -54,6 +59,6 @@ describe("OrderDetailPanel action button", () => {
         <OrderDetailPanel order={null} onAdvance={() => undefined} />
       </ThemeProvider>,
     );
-    expect(screen.getByText("Select an order")).toBeTruthy();
+    expect(screen.getByText("No order selected")).toBeTruthy();
   });
 });

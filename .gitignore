@@ -32,3 +32,15 @@ pnpm-debug.log*
 .idea
 
 .claude
+
+design/
+docs/
+.claude/
+CLAUDE.md
+railway.json
+
+design/
+docs/
+.claude/
+CLAUDE.md
+railway.json

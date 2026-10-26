@@ -27,9 +27,7 @@ export function addLine(cart: Cart, menuItem: MenuItem, quantity = 1): Cart {
   const existing = cart.lines.find((line) => line.menuItem.id === menuItem.id);
   const lines = existing
     ? cart.lines.map((line) =>
-        line.menuItem.id === menuItem.id
-          ? { ...line, quantity: line.quantity + quantity }
-          : line,
+        line.menuItem.id === menuItem.id ? { ...line, quantity: line.quantity + quantity } : line,
       )
     : [...cart.lines, { menuItem, quantity }];
 

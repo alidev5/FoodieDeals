@@ -1,4 +1,8 @@
-import { SOCKET_EVENTS, type Restaurant, type RestaurantAvailabilityChangedPayload } from "@foodiedeals/shared";
+import {
+  SOCKET_EVENTS,
+  type Restaurant,
+  type RestaurantAvailabilityChangedPayload,
+} from "@foodiedeals/shared";
 import { useSocket } from "@foodiedeals/ui-native";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -11,7 +15,9 @@ export function useRestaurantsRealtime() {
     const onAvailabilityChanged = (payload: RestaurantAvailabilityChangedPayload) => {
       queryClient.setQueryData<Restaurant[]>(["restaurants"], (current) =>
         current?.map((restaurant) =>
-          restaurant.id === payload.restaurantId ? { ...restaurant, isOpen: payload.isOpen } : restaurant,
+          restaurant.id === payload.restaurantId
+            ? { ...restaurant, isOpen: payload.isOpen }
+            : restaurant,
         ),
       );
     };

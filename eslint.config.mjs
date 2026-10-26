@@ -44,6 +44,18 @@ export default tseslint.config(
     }
   },
   {
+    // CommonJS tooling config (jest, babel, metro) and the jest setup files that run under Node.
+    files: ["**/*.config.js", "**/jest.setup.jsx"],
+    languageOptions: {
+      sourceType: "commonjs",
+      parserOptions: { ecmaFeatures: { jsx: true } },
+      globals: { module: "writable", require: "readonly", __dirname: "readonly", process: "readonly", jest: "readonly" }
+    },
+    rules: {
+      "@typescript-eslint/no-require-imports": "off"
+    }
+  },
+  {
     files: ["apps/api/scripts/**/*.ts"],
     rules: {
       // Standalone CLI scripts report progress to stdout directly.

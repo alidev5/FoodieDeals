@@ -2,12 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { readStoredValue, writeStoredValue } from "../../../lib/secureStorage";
 
-const PICKUP_NAME_KEY = "foodiedeals.pickup-name";
-const QUERY_KEY = ["pickup-name"];
+export const PICKUP_NAME_KEY = "foodiedeals.pickup-name";
+export const PICKUP_NAME_QUERY_KEY = ["pickup-name"];
 
 export function usePickupName() {
   return useQuery({
-    queryKey: QUERY_KEY,
+    queryKey: PICKUP_NAME_QUERY_KEY,
     queryFn: () => readStoredValue(PICKUP_NAME_KEY),
   });
 }
@@ -21,7 +21,7 @@ export function useSavePickupName() {
       return name;
     },
     onSuccess: (name) => {
-      queryClient.setQueryData(QUERY_KEY, name);
+      queryClient.setQueryData(PICKUP_NAME_QUERY_KEY, name);
     },
   });
 }

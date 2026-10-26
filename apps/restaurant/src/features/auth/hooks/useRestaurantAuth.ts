@@ -33,3 +33,14 @@ export function useSaveRestaurantSession() {
     },
   });
 }
+
+export function useClearRestaurantSession() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => writeStoredValue(SESSION_KEY, ""),
+    onSuccess: () => {
+      queryClient.setQueryData(QUERY_KEY, null);
+    },
+  });
+}

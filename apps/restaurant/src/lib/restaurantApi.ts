@@ -9,7 +9,13 @@ export interface RestaurantOrder {
   status: OrderStatus;
   pickupName: string;
   createdAt: string;
-  items: Array<{ name: string; priceCents: number; quantity: number }>;
+  acceptedAt: string | null;
+  readyAt: string | null;
+  pickedUpAt: string | null;
+  /** Set once FoodieDeals has paid the restaurant its share for this order. */
+  paidOutAt: string | null;
+  items: Array<{ menuItemId: string; name: string; priceCents: number; quantity: number }>;
+  appliedDealId: string | null;
   appliedDealName: string | null;
   subtotalCents: number;
   discountCents: number;
@@ -22,12 +28,27 @@ export interface RestaurantOrder {
 export interface RestaurantStats {
   active: number;
   ready: number;
-  completedToday: number;
-  revenueTodayCents: number;
+  doneToday: number;
+  ordersToday: number;
+  ordersYesterday: number;
+  salesTodayCents: number;
+  salesYesterdayCents: number;
+  newCustomersToday: number;
+  newCustomersYesterday: number;
+  avgPrepMinutesToday: number | null;
+  avgPrepMinutesYesterday: number | null;
+  /** The restaurant's share (after the platform fee) of today's orders. */
+  earnedTodayCents: number;
+  /** The restaurant's share of every order FoodieDeals hasn't paid out yet. */
+  owedCents: number;
+  owedOrderCount: number;
 }
 
 class RestaurantApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
     super(message);
   }
 }
@@ -60,10 +81,14 @@ export function getStats(restaurantId: string, demoKey: string) {
 }
 
 export function setAvailability(restaurantId: string, demoKey: string, isOpen: boolean) {
-  return request<{ restaurantId: string; isOpen: boolean }>(`/restaurants/${restaurantId}/availability`, demoKey, {
-    method: "PATCH",
-    body: JSON.stringify({ isOpen }),
-  });
+  return request<{ restaurantId: string; isOpen: boolean }>(
+    `/restaurants/${restaurantId}/availability`,
+    demoKey,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ isOpen }),
+    },
+  );
 }
 
 export type OrderAction = "ACCEPT" | "MARK_READY" | "PICKED_UP";

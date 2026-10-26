@@ -65,6 +65,12 @@ export const restaurantSchema = z.object({
   heroPhoto: z.string().optional(),
   address: z.string().optional(),
   phone: z.string().optional(),
+  prepMinutesMin: z.number().int().positive().optional(),
+  prepMinutesMax: z.number().int().positive().optional(),
+  /** 1-4, rendered as $ to $$. */
+  priceLevel: z.number().int().min(1).max(4).optional(),
+  /** Minutes after midnight, restaurant local time. */
+  closesAtMinute: z.number().int().min(0).max(1440).optional(),
   menu: z.array(menuItemSchema),
   deals: z.array(dealSchema),
 });

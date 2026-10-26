@@ -13,7 +13,13 @@ export interface CardProps extends PropsWithChildren {
   style?: StyleProp<ViewStyle>;
 }
 
-export function Card({ variant = "light", radius = "lg", padding = "lg", children, style }: CardProps) {
+export function Card({
+  variant = "light",
+  radius = "xl",
+  padding = "xl",
+  children,
+  style,
+}: CardProps) {
   const theme = useTheme();
 
   const backgroundColor = variant === "dark" ? theme.color.surfaceDark : theme.color.surface;

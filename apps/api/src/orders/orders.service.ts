@@ -1,5 +1,10 @@
 import { canTransition, type OrderStatus } from "@foodiedeals/shared";
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { Prisma } from "@prisma/client";
 
@@ -10,9 +15,18 @@ import { PrismaService } from "../prisma/prisma.service";
 import type { OrderActionDto } from "./orders.dto";
 import { toOrderResponse, type OrderResponse } from "./orders.mapper";
 
-const ORDER_INCLUDE = {
+export const ORDER_INCLUDE = {
   items: true,
-  restaurant: { select: { name: true, address: true, phone: true } },
+  restaurant: {
+    select: {
+      name: true,
+      address: true,
+      phone: true,
+      heroPhoto: true,
+      prepMinutesMin: true,
+      prepMinutesMax: true,
+    },
+  },
   customer: { select: { pickupName: true, deviceId: true } },
 } as const;
 
@@ -21,6 +35,16 @@ const ACTION_TO_STATUS: Record<OrderActionDto["action"], OrderStatus> = {
   MARK_READY: "READY",
   PICKED_UP: "PICKED_UP",
 };
+
+const STATUS_TIMESTAMP_FIELD: Partial<
+  Record<OrderStatus, "acceptedAt" | "readyAt" | "pickedUpAt">
+> = {
+  ACCEPTED: "acceptedAt",
+  READY: "readyAt",
+  PICKED_UP: "pickedUpAt",
+};
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function startOfUtcDay(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
@@ -100,7 +124,9 @@ export class OrdersService {
       throw error;
     }
 
-    const created = await this.prisma.order.findUnique({ where: { stripePaymentIntentId: paymentIntentId } });
+    const created = await this.prisma.order.findUnique({
+      where: { stripePaymentIntentId: paymentIntentId },
+    });
     if (created) {
       this.eventEmitter.emit("order.created", {
         orderId: created.id,
@@ -155,6 +181,17 @@ export class OrdersService {
     return order ? toOrderResponse(order) : null;
   }
 
+  async listForDevice(deviceId: string): Promise<OrderResponse[]> {
+    const orders = await this.prisma.order.findMany({
+      where: { customer: { deviceId } },
+      include: ORDER_INCLUDE,
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+
+    return orders.map(toOrderResponse);
+  }
+
   async listForRestaurant(restaurantId: string, status?: OrderStatus): Promise<OrderResponse[]> {
     const orders = await this.prisma.order.findMany({
       where: { restaurantId, ...(status ? { status } : {}) },
@@ -167,26 +204,82 @@ export class OrdersService {
 
   async getStats(restaurantId: string) {
     const today = startOfUtcDay(new Date());
+    const yesterday = new Date(today.getTime() - DAY_MS);
 
-    const [active, ready, completedToday, revenueToday] = await Promise.all([
-      this.prisma.order.count({ where: { restaurantId, status: { in: ["WAITING", "ACCEPTED"] } } }),
-      this.prisma.order.count({ where: { restaurantId, status: "READY" } }),
-      this.prisma.order.count({ where: { restaurantId, status: "PICKED_UP", orderDate: today } }),
-      this.prisma.order.aggregate({
-        where: { restaurantId, status: "PICKED_UP", orderDate: today },
-        _sum: { restaurantReceivesCents: true },
-      }),
-    ]);
+    const [active, ready, doneToday, todayDay, yesterdayDay, firstOrders, owed] = await Promise.all(
+      [
+        this.prisma.order.count({
+          where: { restaurantId, status: { in: ["WAITING", "ACCEPTED"] } },
+        }),
+        this.prisma.order.count({ where: { restaurantId, status: "READY" } }),
+        this.prisma.order.count({ where: { restaurantId, status: "PICKED_UP", orderDate: today } }),
+        this.dayTotals(restaurantId, today),
+        this.dayTotals(restaurantId, yesterday),
+        this.prisma.order.groupBy({
+          by: ["customerId"],
+          where: { restaurantId },
+          _min: { createdAt: true },
+        }),
+        this.prisma.order.aggregate({
+          where: { restaurantId, paidOutAt: null },
+          _sum: { restaurantReceivesCents: true },
+          _count: true,
+        }),
+      ],
+    );
+
+    const newCustomersOn = (day: Date) =>
+      firstOrders.filter((row) => {
+        const first = row._min.createdAt;
+        return first !== null && first >= day && first.getTime() < day.getTime() + DAY_MS;
+      }).length;
 
     return {
       active,
       ready,
-      completedToday,
-      revenueTodayCents: revenueToday._sum.restaurantReceivesCents ?? 0,
+      doneToday,
+      ordersToday: todayDay.orders,
+      ordersYesterday: yesterdayDay.orders,
+      salesTodayCents: todayDay.salesCents,
+      salesYesterdayCents: yesterdayDay.salesCents,
+      newCustomersToday: newCustomersOn(today),
+      newCustomersYesterday: newCustomersOn(yesterday),
+      avgPrepMinutesToday: todayDay.avgPrepMinutes,
+      avgPrepMinutesYesterday: yesterdayDay.avgPrepMinutes,
+      earnedTodayCents: todayDay.earnedCents,
+      owedCents: owed._sum.restaurantReceivesCents ?? 0,
+      owedOrderCount: owed._count,
     };
   }
 
-  async applyAction(orderId: string, action: OrderActionDto["action"], demoKey: string | undefined) {
+  private async dayTotals(restaurantId: string, orderDate: Date) {
+    const orders = await this.prisma.order.findMany({
+      where: { restaurantId, orderDate },
+      select: { totalCents: true, restaurantReceivesCents: true, createdAt: true, readyAt: true },
+    });
+
+    const prepDurations = orders
+      .filter((order) => order.readyAt !== null)
+      .map((order) => (order.readyAt as Date).getTime() - order.createdAt.getTime());
+
+    return {
+      orders: orders.length,
+      salesCents: orders.reduce((sum, order) => sum + order.totalCents, 0),
+      earnedCents: orders.reduce((sum, order) => sum + order.restaurantReceivesCents, 0),
+      avgPrepMinutes:
+        prepDurations.length > 0
+          ? Math.round(
+              prepDurations.reduce((sum, ms) => sum + ms, 0) / prepDurations.length / 60000,
+            )
+          : null,
+    };
+  }
+
+  async applyAction(
+    orderId: string,
+    action: OrderActionDto["action"],
+    demoKey: string | undefined,
+  ) {
     const order = await this.prisma.order.findUnique({ where: { id: orderId } });
     if (!order) {
       throw new NotFoundException(`Order ${orderId} not found`);
@@ -199,9 +292,10 @@ export class OrdersService {
       throw new ConflictException(`Cannot move order from ${order.status} to ${target}`);
     }
 
+    const timestampField = STATUS_TIMESTAMP_FIELD[target];
     const updated = await this.prisma.order.update({
       where: { id: orderId },
-      data: { status: target },
+      data: { status: target, ...(timestampField ? { [timestampField]: new Date() } : {}) },
       include: ORDER_INCLUDE,
     });
 

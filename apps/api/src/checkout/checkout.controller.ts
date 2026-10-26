@@ -23,7 +23,9 @@ export class CheckoutController {
   @ApiOperation({ summary: "Create a Stripe payment intent for a cart" })
   @ApiCreatedResponse({ description: "Client secret and quote" })
   @UsePipes(new ZodValidationPipe(createPaymentIntentRequestSchema))
-  async createPaymentIntent(@Body() body: ReturnType<typeof createPaymentIntentRequestSchema.parse>) {
+  async createPaymentIntent(
+    @Body() body: ReturnType<typeof createPaymentIntentRequestSchema.parse>,
+  ) {
     return this.checkoutService.createPaymentIntent(body);
   }
 }

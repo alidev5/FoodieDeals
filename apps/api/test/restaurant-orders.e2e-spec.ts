@@ -20,7 +20,13 @@ describe("Restaurant orders endpoints (e2e)", () => {
 
     await prisma.restaurant.upsert({
       where: { id: restaurantId },
-      create: { id: restaurantId, name: "E2E Orders Kitchen", demoKey, cuisine: "Test", isOpen: true },
+      create: {
+        id: restaurantId,
+        name: "E2E Orders Kitchen",
+        demoKey,
+        cuisine: "Test",
+        isOpen: true,
+      },
       update: {},
     });
   });
@@ -56,7 +62,22 @@ describe("Restaurant orders endpoints (e2e)", () => {
       .set("x-restaurant-key", demoKey)
       .expect(200);
 
-    expect(response.body).toEqual({ active: 0, ready: 0, completedToday: 0, revenueTodayCents: 0 });
+    expect(response.body).toEqual({
+      active: 0,
+      ready: 0,
+      doneToday: 0,
+      ordersToday: 0,
+      ordersYesterday: 0,
+      salesTodayCents: 0,
+      salesYesterdayCents: 0,
+      newCustomersToday: 0,
+      newCustomersYesterday: 0,
+      avgPrepMinutesToday: null,
+      avgPrepMinutesYesterday: null,
+      earnedTodayCents: 0,
+      owedCents: 0,
+      owedOrderCount: 0,
+    });
   });
 
   it("toggles availability", async () => {

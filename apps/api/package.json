@@ -12,7 +12,8 @@
     "test:e2e": "jest --config jest.e2e.config.js",
     "seed": "tsx prisma/seed.ts",
     "stripe:setup": "tsx scripts/stripe-setup.ts",
-    "webhook:dev-test": "tsx scripts/send-test-webhook.ts"
+    "webhook:dev-test": "tsx scripts/send-test-webhook.ts",
+    "payouts:mark-paid": "tsx scripts/mark-paid-out.ts"
   },
   "dependencies": {
     "@foodiedeals/shared": "workspace:*",

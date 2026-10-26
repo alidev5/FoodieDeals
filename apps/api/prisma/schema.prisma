@@ -31,6 +31,10 @@ model Restaurant {
   address         String?
   phone           String?
   stripeAccountId String?
+  prepMinutesMin  Int?
+  prepMinutesMax  Int?
+  priceLevel      Int?
+  closesAtMinute  Int?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -44,6 +48,7 @@ model MenuItem {
   id           String @id @default(cuid())
   restaurantId String
   name         String
+  description  String?
   priceCents   Int
   photo        String?
 
@@ -103,6 +108,12 @@ model Order {
   appliedDealId         String?
   appliedDealName       String?
   stripePaymentIntentId String  @unique
+
+  acceptedAt DateTime?
+  readyAt    DateTime?
+  pickedUpAt DateTime?
+  // Charges settle on the platform account; restaurants are paid out manually and this marks when.
+  paidOutAt  DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

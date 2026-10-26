@@ -14,3 +14,7 @@ export async function getOrCreateDeviceId(): Promise<string> {
   await writeStoredValue(DEVICE_ID_KEY, created);
   return created;
 }
+
+export async function setDeviceId(deviceId: string): Promise<void> {
+  await writeStoredValue(DEVICE_ID_KEY, deviceId);
+}

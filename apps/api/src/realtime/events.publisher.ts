@@ -19,14 +19,22 @@ export class EventsPublisher {
 
   @OnEvent("order.created")
   handleOrderCreated(payload: OrderCreatedPayload) {
-    this.gateway.server.to(restaurantRoom(payload.restaurantId)).emit(SOCKET_EVENTS.orderCreated, payload);
-    this.gateway.server.to(orderRoom(payload.orderId)).emit(SOCKET_EVENTS.orderStatusChanged, payload);
+    this.gateway.server
+      .to(restaurantRoom(payload.restaurantId))
+      .emit(SOCKET_EVENTS.orderCreated, payload);
+    this.gateway.server
+      .to(orderRoom(payload.orderId))
+      .emit(SOCKET_EVENTS.orderStatusChanged, payload);
   }
 
   @OnEvent("order.status-changed")
   handleOrderStatusChanged(payload: OrderStatusChangedPayload) {
-    this.gateway.server.to(orderRoom(payload.orderId)).emit(SOCKET_EVENTS.orderStatusChanged, payload);
-    this.gateway.server.to(restaurantRoom(payload.restaurantId)).emit(SOCKET_EVENTS.orderStatusChanged, payload);
+    this.gateway.server
+      .to(orderRoom(payload.orderId))
+      .emit(SOCKET_EVENTS.orderStatusChanged, payload);
+    this.gateway.server
+      .to(restaurantRoom(payload.restaurantId))
+      .emit(SOCKET_EVENTS.orderStatusChanged, payload);
   }
 
   @OnEvent("restaurant.availability-changed")

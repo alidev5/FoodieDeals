@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import type {
   CreatePaymentIntentParams,
   CreatedPaymentIntent,
+  RetrievedPaymentIntent,
   StripeClient,
   StripeWebhookEvent,
 } from "./stripe-client";
@@ -21,8 +22,6 @@ export class RealStripeClient implements StripeClient {
     const intent = await this.stripe.paymentIntents.create({
       amount: params.amountCents,
       currency: "usd",
-      application_fee_amount: params.applicationFeeCents,
-      transfer_data: { destination: params.destinationAccountId },
       metadata: params.metadata,
       automatic_payment_methods: { enabled: true },
     });
@@ -32,6 +31,11 @@ export class RealStripeClient implements StripeClient {
     }
 
     return { id: intent.id, clientSecret: intent.client_secret };
+  }
+
+  async retrievePaymentIntent(paymentIntentId: string): Promise<RetrievedPaymentIntent> {
+    const intent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
+    return { id: intent.id, status: intent.status, metadata: intent.metadata };
   }
 
   constructWebhookEvent(rawBody: Buffer, signature: string): StripeWebhookEvent {

@@ -21,6 +21,10 @@
         "backgroundColor": "#1B1613"
       }
     },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
     "extra": {
       "router": {
         "origin": false

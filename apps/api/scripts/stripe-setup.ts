@@ -68,12 +68,16 @@ async function main() {
     });
 
     if (!existing) {
-      console.warn(`Skipping ${restaurant.name}: not found in the database. Run the seed script first.`);
+      console.warn(
+        `Skipping ${restaurant.name}: not found in the database. Run the seed script first.`,
+      );
       continue;
     }
 
     if (existing.stripeAccountId) {
-      console.log(`${restaurant.name} already has a connected account: ${existing.stripeAccountId}`);
+      console.log(
+        `${restaurant.name} already has a connected account: ${existing.stripeAccountId}`,
+      );
       continue;
     }
 

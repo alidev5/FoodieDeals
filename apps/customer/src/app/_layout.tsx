@@ -7,18 +7,27 @@ import {
   PlusJakartaSans_500Medium,
   PlusJakartaSans_600SemiBold,
 } from "@expo-google-fonts/plus-jakarta-sans";
-import { SocketProvider, ThemeProvider, useTheme } from "@foodiedeals/ui-native";
-import { StripeProvider } from "@stripe/stripe-react-native";
+import {
+  BootSplash,
+  SocketProvider,
+  ThemeProvider,
+  useMinimumDelay,
+  useTheme,
+} from "@foodiedeals/ui-native";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, usePathname, useRootNavigationState, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { View } from "react-native";
+import { useEffect } from "react";
+import { StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { StartNewOrderSheet } from "../features/cart/components/StartNewOrderSheet";
+import { TabBar } from "../features/home/components/TabBar";
+import { usePickupName } from "../features/onboarding/hooks/usePickupName";
 import { API_URL } from "../lib/apiUrl";
 import { queryClient } from "../lib/queryClient";
+import { StripeProvider } from "../lib/StripeProvider";
 
 const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
 
@@ -32,15 +41,37 @@ function AppShell() {
     PlusJakartaSans_600SemiBold,
   });
 
-  if (!fontsLoaded) {
-    return <View style={{ flex: 1, backgroundColor: theme.color.background }} />;
-  }
+  const { data: pickupName, isLoading: isSessionLoading } = usePickupName();
+  const splashShownLongEnough = useMinimumDelay(1400);
+  const router = useRouter();
+  const pathname = usePathname();
+  const isNavigationReady = Boolean(useRootNavigationState()?.key);
+  const isReady = fontsLoaded && !isSessionLoading && splashShownLongEnough;
+
+  // Every screen past onboarding needs a pickup name, including ones opened by direct URL.
+  useEffect(() => {
+    if (isNavigationReady && !isSessionLoading && !pickupName && pathname !== "/") {
+      router.replace("/");
+    }
+  }, [isNavigationReady, isSessionLoading, pickupName, pathname, router]);
 
   return (
     <>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.color.background } }} />
+      <StatusBar style={isReady ? "dark" : "light"} />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: "slide_from_right",
+          contentStyle: { backgroundColor: theme.color.background },
+        }}
+      />
+      {isReady && pickupName ? <TabBar /> : null}
       <StartNewOrderSheet />
+      {isReady ? null : (
+        <View style={StyleSheet.absoluteFill}>
+          <BootSplash tagline="Pickup deals from restaurants around you" />
+        </View>
+      )}
     </>
   );
 }
@@ -48,7 +79,10 @@ function AppShell() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY} merchantIdentifier="merchant.com.foodiedeals">
+      <StripeProvider
+        publishableKey={STRIPE_PUBLISHABLE_KEY}
+        merchantIdentifier="merchant.com.foodiedeals"
+      >
         <QueryClientProvider client={queryClient}>
           <SocketProvider url={API_URL}>
             <ThemeProvider>

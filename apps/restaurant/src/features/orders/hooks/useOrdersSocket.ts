@@ -6,11 +6,19 @@ import {
 import { useSocket } from "@foodiedeals/ui-native";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAudioPlayer } from "expo-audio";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AppState } from "react-native";
 
 import chimeSource from "../../../../assets/chime.wav";
 import { useRestaurantSession } from "../../auth/hooks/useRestaurantAuth";
+
+export interface NewOrderAlert {
+  orderId: string;
+  orderNumber: number;
+}
+
+const HIGHLIGHT_MS = 6000;
+const MAX_VISIBLE_ALERTS = 3;
 
 export function useOrdersSocket() {
   const socket = useSocket();
@@ -18,6 +26,13 @@ export function useOrdersSocket() {
   const { data: session } = useRestaurantSession();
   const chime = useAudioPlayer(chimeSource);
   const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
+  const [alerts, setAlerts] = useState<NewOrderAlert[]>([]);
+
+  const dismissAlert = useCallback(
+    (orderId: string) =>
+      setAlerts((current) => current.filter((alert) => alert.orderId !== orderId)),
+    [],
+  );
 
   useEffect(() => {
     if (!session) return;
@@ -39,9 +54,18 @@ export function useOrdersSocket() {
       if (payload.restaurantId !== session.restaurantId) return;
       invalidate();
       setHighlightedOrderId(payload.orderId);
+      setAlerts((current) =>
+        [{ orderId: payload.orderId, orderNumber: payload.orderNumber }, ...current].slice(
+          0,
+          MAX_VISIBLE_ALERTS,
+        ),
+      );
       chime.seekTo(0);
       chime.play();
-      setTimeout(() => setHighlightedOrderId(null), 4000);
+      setTimeout(
+        () => setHighlightedOrderId((current) => (current === payload.orderId ? null : current)),
+        HIGHLIGHT_MS,
+      );
     };
 
     const onStatusChanged = (payload: OrderStatusChangedPayload) => {
@@ -69,5 +93,5 @@ export function useOrdersSocket() {
     };
   }, [socket, queryClient, session, chime]);
 
-  return { highlightedOrderId };
+  return { highlightedOrderId, alerts, dismissAlert };
 }

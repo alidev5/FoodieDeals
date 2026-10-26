@@ -1,5 +1,18 @@
-import { addLine, computeQuote, createEmptyCart, type Cart, type Quote, type Restaurant } from "@foodiedeals/shared";
-import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  addLine,
+  computeQuote,
+  createEmptyCart,
+  type Cart,
+  type Quote,
+  type Restaurant,
+} from "@foodiedeals/shared";
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 
 import { STRIPE_CLIENT, type StripeClient } from "../payments/stripe-client";
 import { PrismaService } from "../prisma/prisma.service";
@@ -66,15 +79,9 @@ export class CheckoutService {
     const restaurant = await this.getRestaurantOrThrow(request.restaurantId);
 
     if (!restaurant.isOpen) {
-      throw new ConflictException(`${restaurant.name} is paused and isn't accepting orders right now`);
-    }
-
-    const restaurantRow = await this.prisma.restaurant.findUniqueOrThrow({
-      where: { id: restaurant.id },
-      select: { stripeAccountId: true },
-    });
-    if (!restaurantRow.stripeAccountId) {
-      throw new ConflictException(`${restaurant.name} has no connected Stripe account yet`);
+      throw new ConflictException(
+        `${restaurant.name} is paused and isn't accepting orders right now`,
+      );
     }
 
     const cart = this.buildCart(restaurant, request.items);
@@ -111,8 +118,6 @@ export class CheckoutService {
 
     const intent = await this.stripeClient.createPaymentIntent({
       amountCents: quote.totalCents,
-      applicationFeeCents: quote.platformFeeCents,
-      destinationAccountId: restaurantRow.stripeAccountId,
       metadata,
     });
 

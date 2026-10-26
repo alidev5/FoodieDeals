@@ -1,12 +1,5 @@
-import type {
-  ArgumentsHost,
-  ExceptionFilter} from "@nestjs/common";
-import {
-  Catch,
-  HttpException,
-  HttpStatus,
-  Logger,
-} from "@nestjs/common";
+import type { ArgumentsHost, ExceptionFilter } from "@nestjs/common";
+import { Catch, HttpException, HttpStatus, Logger } from "@nestjs/common";
 import type { Request, Response } from "express";
 
 interface ErrorBody {
@@ -41,7 +34,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
     };
 
     if (statusCode >= HttpStatus.INTERNAL_SERVER_ERROR) {
-      this.logger.error(`${request.method} ${request.url}`, exception instanceof Error ? exception.stack : undefined);
+      this.logger.error(
+        `${request.method} ${request.url}`,
+        exception instanceof Error ? exception.stack : undefined,
+      );
     }
 
     response.status(statusCode).json(body);

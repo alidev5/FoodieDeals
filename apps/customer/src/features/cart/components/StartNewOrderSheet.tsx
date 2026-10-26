@@ -14,8 +14,7 @@ export function StartNewOrderSheet() {
       <View style={{ gap: theme.spacing.lg }}>
         <Text variant="title">Start a new order?</Text>
         <Text variant="body" color="secondary">
-          Your cart has items from another restaurant. One order can only come from one
-          restaurant.
+          Your cart has items from another restaurant. One order can only come from one restaurant.
         </Text>
         <View style={{ gap: theme.spacing.sm }}>
           <Button label="Start new order" variant="accent" onPress={confirmStartNewOrder} />

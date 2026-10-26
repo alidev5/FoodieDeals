@@ -34,7 +34,9 @@ async function request<T>(baseUrl: string, path: string, init: RequestInit): Pro
 export function createApiClient(baseUrl: string): ApiClient {
   return {
     get: (path) => request(baseUrl, path, { method: "GET" }),
-    post: (path, body) => request(baseUrl, path, { method: "POST", body: body ? JSON.stringify(body) : undefined }),
-    patch: (path, body) => request(baseUrl, path, { method: "PATCH", body: body ? JSON.stringify(body) : undefined }),
+    post: (path, body) =>
+      request(baseUrl, path, { method: "POST", body: body ? JSON.stringify(body) : undefined }),
+    patch: (path, body) =>
+      request(baseUrl, path, { method: "PATCH", body: body ? JSON.stringify(body) : undefined }),
   };
 }

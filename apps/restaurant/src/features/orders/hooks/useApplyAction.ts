@@ -1,7 +1,11 @@
 import type { OrderStatus } from "@foodiedeals/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { applyOrderAction, type OrderAction, type RestaurantOrder } from "../../../lib/restaurantApi";
+import {
+  applyOrderAction,
+  type OrderAction,
+  type RestaurantOrder,
+} from "../../../lib/restaurantApi";
 import { useRestaurantSession } from "../../auth/hooks/useRestaurantAuth";
 
 const ACTION_TO_STATUS: Record<OrderAction, OrderStatus> = {

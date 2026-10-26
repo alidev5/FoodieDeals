@@ -7,16 +7,27 @@ import {
   PlusJakartaSans_500Medium,
   PlusJakartaSans_600SemiBold,
 } from "@expo-google-fonts/plus-jakarta-sans";
-import { SocketProvider, ThemeProvider, useTheme } from "@foodiedeals/ui-native";
+import {
+  BootSplash,
+  SocketProvider,
+  ThemeProvider,
+  useMinimumDelay,
+  useTheme,
+} from "@foodiedeals/ui-native";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { useRestaurantSession } from "../features/auth/hooks/useRestaurantAuth";
+import { OrderAlertsProvider } from "../features/orders/OrderAlertsProvider";
 import { API_URL } from "../lib/apiUrl";
 import { queryClient } from "../lib/queryClient";
+
+// The dashboard is information-dense, so it renders a step smaller than the phone app.
+const DASHBOARD_DENSITY = 0.86;
 
 function AppShell() {
   const theme = useTheme();
@@ -28,14 +39,27 @@ function AppShell() {
     PlusJakartaSans_600SemiBold,
   });
 
-  if (!fontsLoaded) {
-    return <View style={{ flex: 1, backgroundColor: theme.color.background }} />;
-  }
+  const { isLoading: isSessionLoading } = useRestaurantSession();
+  const splashShownLongEnough = useMinimumDelay(1200);
+  const isReady = fontsLoaded && !isSessionLoading && splashShownLongEnough;
 
   return (
     <>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.color.background } }} />
+      <StatusBar style={isReady ? "dark" : "light"} />
+      <OrderAlertsProvider>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: "fade",
+            contentStyle: { backgroundColor: theme.color.background },
+          }}
+        />
+      </OrderAlertsProvider>
+      {isReady ? null : (
+        <View style={StyleSheet.absoluteFill}>
+          <BootSplash tagline="Restaurant dashboard" />
+        </View>
+      )}
     </>
   );
 }
@@ -45,7 +69,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <SocketProvider url={API_URL}>
-          <ThemeProvider>
+          <ThemeProvider density={DASHBOARD_DENSITY}>
             <AppShell />
           </ThemeProvider>
         </SocketProvider>

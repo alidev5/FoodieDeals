@@ -8,7 +8,7 @@ real time.
 
 - `apps/customer` — Expo customer app (phone).
 - `apps/restaurant` — Expo restaurant app (tablet, also runs in a browser).
-- `apps/api` — NestJS API, Socket.IO, Prisma/PostgreSQL, Stripe Connect.
+- `apps/api` — NestJS API, Socket.IO, Prisma/PostgreSQL, Stripe (charges settle on the platform account; restaurants are paid out manually for now).
 - `packages/shared` — domain logic: money, pricing, deals, order state machine,
   realtime event contracts.
 - `packages/ui-native` — shared React Native components, theme, API client and
@@ -40,7 +40,6 @@ cp apps/api/.env.example apps/api/.env
 
 pnpm --filter api exec prisma migrate dev
 pnpm --filter api run seed
-pnpm --filter api run stripe:setup   # creates a test connected account per restaurant
 
 cp apps/customer/.env.example apps/customer/.env
 cp apps/restaurant/.env.example apps/restaurant/.env
@@ -65,16 +64,24 @@ pnpm dev
 
 Runs every workspace's `dev` script through Turborepo: the Nest API on
 `:3000`, the customer app's Expo CLI, and the restaurant app's Expo CLI. Press
-`w` in the restaurant app's Expo CLI to open it in a browser instead of a
-simulator/device.
+`w` in either app's Expo CLI (or run `pnpm --filter <app> run web`) to open
+it in a browser instead of a simulator/device. The API enables CORS outside
+production so the web builds can reach it.
 
 ## Testing payments end to end
 
-Use Stripe's test card `4242 4242 4242 4242`, any future expiry, any CVC, any
-ZIP, in the PaymentSheet. See [docs/PAYMENTS.md](./docs/PAYMENTS.md) for the
-full flow, including how to forward webhooks locally with the Stripe CLI, and
-`apps/api/scripts/send-test-webhook.ts` for sending a signed test event
-without a real payment.
+On the phone the card is entered in Stripe's PaymentSheet; in the browser the
+checkout shows Stripe Elements card fields. Either way, use Stripe's test card
+`4242 4242 4242 4242`, any future expiry and any CVC (`4000 0027 6000 3184`
+triggers 3D Secure, `4000 0000 0000 9995` is declined).
+
+After Stripe confirms the payment the app calls
+`POST /payments/intents/:id/sync`, which reads the intent back from Stripe and
+creates the order through the same idempotent path as the webhook. Payments
+therefore complete even when `stripe listen` isn't running; the webhook stays
+the primary path when it is. See [docs/PAYMENTS.md](./docs/PAYMENTS.md) for
+webhook forwarding, and `apps/api/scripts/send-test-webhook.ts` for sending a
+signed test event without a real payment.
 
 ## Quality gates
 
@@ -92,15 +99,20 @@ calls the real Stripe API).
 
 ## Useful scripts
 
-| Command | What it does |
-| --- | --- |
-| `pnpm --filter api run seed` | Seeds the five demo restaurants, menus and deals |
-| `pnpm --filter api run stripe:setup` | Idempotently creates a Stripe test connected account per restaurant |
-| `pnpm --filter api run webhook:dev-test` | Sends one signed `payment_intent.succeeded` event to a running API, creating a real order |
-| `pnpm --filter api exec prisma studio` | Browse the database |
+| Command                                                  | What it does                                                                              |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `pnpm --filter api run seed`                             | Seeds the five demo restaurants, menus and deals                                          |
+| `pnpm --filter api run webhook:dev-test`                 | Sends one signed `payment_intent.succeeded` event to a running API, creating a real order |
+| `pnpm --filter api run payouts:mark-paid <restaurantId>` | Marks a restaurant's picked-up orders as paid out after you've sent its share             |
+| `pnpm --filter api run stripe:setup`                     | Creates Stripe test Connect accounts (only needed once automatic payouts are switched on) |
+| `pnpm --filter api exec prisma studio`                   | Browse the database                                                                       |
 
-## Demo restaurant keys
+## Demo accounts
 
-Each restaurant's demo key (entered on first launch of the restaurant app) is
-listed in `packages/shared/src/seed/restaurants.ts`, e.g. `MISO-0001` for
-Miso & Ember Kitchen.
+Customer app: the welcome screen offers two demo customers. Hamza M. has past
+pickups and monthly savings; Sara L. is a first-time customer, so first-visit
+deals apply. Both are created by `pnpm --filter api run seed`.
+
+Restaurant app: the sign-in screen lists every restaurant with its demo key
+(for example `MISO-0001` for Miso & Ember Kitchen) and can fill it in for you.
+The keys live in `packages/shared/src/seed/restaurants.ts`.

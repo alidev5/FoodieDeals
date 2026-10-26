@@ -1,4 +1,11 @@
-import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type PropsWithChildren,
+} from "react";
 import { io, type Socket } from "socket.io-client";
 
 const SocketContext = createContext<Socket | null>(null);

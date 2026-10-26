@@ -21,6 +21,16 @@ import { OrdersService } from "./orders.service";
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
+  @Get()
+  @ApiOperation({ summary: "List the requesting device's orders, newest first" })
+  @ApiOkResponse({ description: "Up to 50 of the device's most recent orders" })
+  async listForDevice(@Query("deviceId") deviceId?: string) {
+    if (!deviceId) {
+      throw new BadRequestException("deviceId is required");
+    }
+    return this.ordersService.listForDevice(deviceId);
+  }
+
   @Get(":id")
   @ApiOperation({ summary: "Get an order, scoped to the requesting device" })
   @ApiOkResponse({ description: "The order" })
@@ -47,7 +57,8 @@ export class OrdersController {
   @ApiOkResponse({ description: "The updated order" })
   async applyAction(
     @Param("id") id: string,
-    @Body(new ZodValidationPipe(orderActionSchema)) body: ReturnType<typeof orderActionSchema.parse>,
+    @Body(new ZodValidationPipe(orderActionSchema))
+    body: ReturnType<typeof orderActionSchema.parse>,
     @Headers("x-restaurant-key") demoKey?: string,
   ) {
     return this.ordersService.applyAction(id, body.action, demoKey);

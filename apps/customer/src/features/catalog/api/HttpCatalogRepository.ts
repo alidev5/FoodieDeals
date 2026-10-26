@@ -21,7 +21,11 @@ export class HttpCatalogRepository implements CatalogRepository {
       const data = await this.client.get<unknown>(`/restaurants/${id}`);
       return restaurantSchema.parse(data);
     } catch (error) {
-      if (error instanceof Error && "status" in error && (error as { status: number }).status === 404) {
+      if (
+        error instanceof Error &&
+        "status" in error &&
+        (error as { status: number }).status === 404
+      ) {
         return null;
       }
       throw error;

@@ -1,6 +1,10 @@
 export async function pollWithBackoff<T>(
   attempt: () => Promise<T>,
-  { retries = 8, initialDelayMs = 400, maxDelayMs = 3000 }: { retries?: number; initialDelayMs?: number; maxDelayMs?: number } = {},
+  {
+    retries = 8,
+    initialDelayMs = 400,
+    maxDelayMs = 3000,
+  }: { retries?: number; initialDelayMs?: number; maxDelayMs?: number } = {},
 ): Promise<T> {
   let delay = initialDelayMs;
   let lastError: unknown;

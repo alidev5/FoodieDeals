@@ -53,7 +53,9 @@ describe("Catalog (e2e)", () => {
   it("lists restaurants including the fixture", async () => {
     const response = await request(app.getHttpServer()).get("/restaurants").expect(200);
 
-    const found = response.body.find((restaurant: { id: string }) => restaurant.id === restaurantId);
+    const found = response.body.find(
+      (restaurant: { id: string }) => restaurant.id === restaurantId,
+    );
     expect(found).toBeDefined();
     expect(found.menu).toHaveLength(1);
     expect(found.deals[0]).toMatchObject({ type: "PERCENT_OFF", percent: 10 });
@@ -65,15 +67,22 @@ describe("Catalog (e2e)", () => {
       .query({ dealType: "PERCENT_OFF" })
       .expect(200);
 
-    expect(response.body.some((restaurant: { id: string }) => restaurant.id === restaurantId)).toBe(true);
+    expect(response.body.some((restaurant: { id: string }) => restaurant.id === restaurantId)).toBe(
+      true,
+    );
   });
 
   it("rejects an invalid dealType", async () => {
-    await request(app.getHttpServer()).get("/restaurants").query({ dealType: "NOT_A_TYPE" }).expect(400);
+    await request(app.getHttpServer())
+      .get("/restaurants")
+      .query({ dealType: "NOT_A_TYPE" })
+      .expect(400);
   });
 
   it("gets a restaurant by id", async () => {
-    const response = await request(app.getHttpServer()).get(`/restaurants/${restaurantId}`).expect(200);
+    const response = await request(app.getHttpServer())
+      .get(`/restaurants/${restaurantId}`)
+      .expect(200);
     expect(response.body.name).toBe("E2E Test Kitchen");
   });
 

@@ -1,5 +1,5 @@
-import { Body, Controller, Post, UsePipes } from "@nestjs/common";
-import { ApiCreatedResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { Body, Controller, Get, Param, Post, UsePipes } from "@nestjs/common";
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from "@nestjs/swagger";
 
 import { ZodValidationPipe } from "../common/pipes/zod-validation.pipe";
 
@@ -17,5 +17,12 @@ export class CustomersController {
   @UsePipes(new ZodValidationPipe(createCustomerSchema))
   async create(@Body() body: ReturnType<typeof createCustomerSchema.parse>) {
     return this.customersService.upsert(body);
+  }
+
+  @Get(":deviceId/summary")
+  @ApiOperation({ summary: "Monthly savings and recently ordered restaurants for a device" })
+  @ApiOkResponse({ description: "Savings totals and recent restaurants, newest first" })
+  async summary(@Param("deviceId") deviceId: string) {
+    return this.customersService.getSummary(deviceId);
   }
 }

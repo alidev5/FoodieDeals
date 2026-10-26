@@ -19,7 +19,9 @@ function findItem(restaurantId: string, itemId: string) {
 
 describe("time window conditions", () => {
   const lotus = findRestaurant("lotus-dumpling");
-  const deal = lotus.deals.find((candidate) => candidate.id === "lotus-dumpling-percent-off-afternoon");
+  const deal = lotus.deals.find(
+    (candidate) => candidate.id === "lotus-dumpling-percent-off-afternoon",
+  );
   if (!deal) throw new Error("missing fixture deal");
 
   const context = (hour: number, minute: number) => ({

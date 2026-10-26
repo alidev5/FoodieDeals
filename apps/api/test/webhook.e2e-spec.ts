@@ -1,4 +1,10 @@
-import { addLine, computeQuote, createEmptyCart, type Deal, type MenuItem } from "@foodiedeals/shared";
+import {
+  addLine,
+  computeQuote,
+  createEmptyCart,
+  type Deal,
+  type MenuItem,
+} from "@foodiedeals/shared";
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
@@ -12,6 +18,7 @@ const fakeStripeClient: StripeClient = {
   createPaymentIntent: async () => {
     throw new Error("not used in this test");
   },
+  retrievePaymentIntent: async (id) => ({ id, status: "requires_payment_method", metadata: {} }),
   constructWebhookEvent: (rawBody) => JSON.parse(rawBody.toString()),
 };
 
@@ -53,7 +60,9 @@ describe("Stripe webhook (e2e)", () => {
         demoKey: "E2E-WEBHOOK-0000",
         cuisine: "Test",
         isOpen: true,
-        menuItems: { create: [{ id: menuItem.id, name: menuItem.name, priceCents: menuItem.priceCents }] },
+        menuItems: {
+          create: [{ id: menuItem.id, name: menuItem.name, priceCents: menuItem.priceCents }],
+        },
       },
       update: {},
     });
@@ -78,7 +87,14 @@ describe("Stripe webhook (e2e)", () => {
       restaurantId,
       deviceId,
       pickupName: "E2E Webhook Tester",
-      items: [{ menuItemId: menuItem.id, name: menuItem.name, priceCents: menuItem.priceCents, quantity: 1 }],
+      items: [
+        {
+          menuItemId: menuItem.id,
+          name: menuItem.name,
+          priceCents: menuItem.priceCents,
+          quantity: 1,
+        },
+      ],
       subtotalCents: quote.subtotalCents,
       discountCents: quote.discountCents,
       taxCents: quote.taxCents,
@@ -111,7 +127,9 @@ describe("Stripe webhook (e2e)", () => {
       .send(event)
       .expect(200);
 
-    const orders = await prisma.order.findMany({ where: { stripePaymentIntentId: `pi_e2e_dup_${runId}` } });
+    const orders = await prisma.order.findMany({
+      where: { stripePaymentIntentId: `pi_e2e_dup_${runId}` },
+    });
     expect(orders).toHaveLength(1);
   });
 
@@ -119,11 +137,23 @@ describe("Stripe webhook (e2e)", () => {
     const first = buildSucceededEvent(eventIds[1]!, `pi_e2e_seq_1_${runId}`, "e2e-device-seq-a");
     const second = buildSucceededEvent(eventIds[2]!, `pi_e2e_seq_2_${runId}`, "e2e-device-seq-b");
 
-    await request(app.getHttpServer()).post("/payments/webhook").set("stripe-signature", "test").send(first).expect(200);
-    await request(app.getHttpServer()).post("/payments/webhook").set("stripe-signature", "test").send(second).expect(200);
+    await request(app.getHttpServer())
+      .post("/payments/webhook")
+      .set("stripe-signature", "test")
+      .send(first)
+      .expect(200);
+    await request(app.getHttpServer())
+      .post("/payments/webhook")
+      .set("stripe-signature", "test")
+      .send(second)
+      .expect(200);
 
-    const firstOrder = await prisma.order.findUnique({ where: { stripePaymentIntentId: `pi_e2e_seq_1_${runId}` } });
-    const secondOrder = await prisma.order.findUnique({ where: { stripePaymentIntentId: `pi_e2e_seq_2_${runId}` } });
+    const firstOrder = await prisma.order.findUnique({
+      where: { stripePaymentIntentId: `pi_e2e_seq_1_${runId}` },
+    });
+    const secondOrder = await prisma.order.findUnique({
+      where: { stripePaymentIntentId: `pi_e2e_seq_2_${runId}` },
+    });
 
     expect(secondOrder?.orderNumber).toBe((firstOrder?.orderNumber ?? 0) + 1);
   });
@@ -154,7 +184,9 @@ describe("Stripe webhook (e2e)", () => {
     const session = await prisma.checkoutSession.findUnique({
       where: { stripePaymentIntentId: paymentIntentId },
     });
-    const order = await prisma.order.findUnique({ where: { stripePaymentIntentId: paymentIntentId } });
+    const order = await prisma.order.findUnique({
+      where: { stripePaymentIntentId: paymentIntentId },
+    });
 
     expect(session?.status).toBe("failed");
     expect(order).toBeNull();

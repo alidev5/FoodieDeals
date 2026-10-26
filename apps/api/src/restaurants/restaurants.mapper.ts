@@ -1,5 +1,9 @@
 import { restaurantSchema, type Deal, type MenuItem, type Restaurant } from "@foodiedeals/shared";
-import type { Deal as DealRow, MenuItem as MenuItemRow, Restaurant as RestaurantRow } from "@prisma/client";
+import type {
+  Deal as DealRow,
+  MenuItem as MenuItemRow,
+  Restaurant as RestaurantRow,
+} from "@prisma/client";
 
 type RestaurantWithRelations = RestaurantRow & {
   menuItems: MenuItemRow[];
@@ -67,6 +71,7 @@ function toSharedMenuItem(row: MenuItemRow): MenuItem {
     id: row.id,
     restaurantId: row.restaurantId,
     name: row.name,
+    ...(row.description ? { description: row.description } : {}),
     priceCents: row.priceCents,
     ...(row.photo ? { photo: row.photo } : {}),
   };
@@ -82,6 +87,10 @@ export function toSharedRestaurant(row: RestaurantWithRelations): Restaurant {
     ...(row.heroPhoto ? { heroPhoto: row.heroPhoto } : {}),
     ...(row.address ? { address: row.address } : {}),
     ...(row.phone ? { phone: row.phone } : {}),
+    ...(row.prepMinutesMin !== null ? { prepMinutesMin: row.prepMinutesMin } : {}),
+    ...(row.prepMinutesMax !== null ? { prepMinutesMax: row.prepMinutesMax } : {}),
+    ...(row.priceLevel !== null ? { priceLevel: row.priceLevel } : {}),
+    ...(row.closesAtMinute !== null ? { closesAtMinute: row.closesAtMinute } : {}),
     menu: row.menuItems.map(toSharedMenuItem),
     deals: row.deals.map(toSharedDeal),
   };

@@ -15,7 +15,12 @@ const misoEmber = {
   cuisine: "Japanese",
   menu: [
     { id: "miso-ramen", restaurantId: "miso-ember", name: "Miso Ramen", priceCents: 1600 },
-    { id: "crispy-pork-gyoza", restaurantId: "miso-ember", name: "Crispy Pork Gyoza (6)", priceCents: 1200 },
+    {
+      id: "crispy-pork-gyoza",
+      restaurantId: "miso-ember",
+      name: "Crispy Pork Gyoza (6)",
+      priceCents: 1200,
+    },
   ],
   deals: [
     {
@@ -85,7 +90,11 @@ describe("CheckoutService", () => {
       getById.mockResolvedValue(null);
 
       await expect(
-        service.quote({ restaurantId: "missing", deviceId: "device-1", items: [{ menuItemId: "x", quantity: 1 }] }),
+        service.quote({
+          restaurantId: "missing",
+          deviceId: "device-1",
+          items: [{ menuItemId: "x", quantity: 1 }],
+        }),
       ).rejects.toBeInstanceOf(NotFoundException);
     });
 
@@ -116,23 +125,8 @@ describe("CheckoutService", () => {
       ).rejects.toBeInstanceOf(ConflictException);
     });
 
-    it("rejects when the restaurant has no connected Stripe account", async () => {
+    it("creates a platform-account payment intent for the server-computed total", async () => {
       getById.mockResolvedValue(misoEmber);
-      findUniqueOrThrow.mockResolvedValue({ stripeAccountId: null });
-
-      await expect(
-        service.createPaymentIntent({
-          restaurantId: "miso-ember",
-          deviceId: "device-1",
-          pickupName: "Hamza M.",
-          items: [{ menuItemId: "miso-ramen", quantity: 1 }],
-        }),
-      ).rejects.toBeInstanceOf(ConflictException);
-    });
-
-    it("creates a payment intent with the server-computed amount and platform fee", async () => {
-      getById.mockResolvedValue(misoEmber);
-      findUniqueOrThrow.mockResolvedValue({ stripeAccountId: "acct_123" });
       createPaymentIntent.mockResolvedValue({ id: "pi_123", clientSecret: "secret_123" });
 
       const result = await service.createPaymentIntent({
@@ -148,11 +142,10 @@ describe("CheckoutService", () => {
       expect(result.clientSecret).toBe("secret_123");
       expect(result.quote.totalCents).toBe(2439);
       expect(createPaymentIntent).toHaveBeenCalledWith(
-        expect.objectContaining({
-          amountCents: 2439,
-          applicationFeeCents: 122,
-          destinationAccountId: "acct_123",
-        }),
+        expect.not.objectContaining({ destinationAccountId: expect.anything() }),
+      );
+      expect(createPaymentIntent).toHaveBeenCalledWith(
+        expect.objectContaining({ amountCents: 2439 }),
       );
       expect(checkoutSessionCreate).toHaveBeenCalledWith(
         expect.objectContaining({

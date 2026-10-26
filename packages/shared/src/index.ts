@@ -8,3 +8,6 @@ export * from "./realtime";
 export * from "./schemas";
 export * from "./theme";
 export { SEED_RESTAURANTS } from "./seed/restaurants";
+export { DEMO_CUSTOMERS } from "./seed/demoCustomers";
+export type { DemoCustomer, DemoPastOrder } from "./seed/demoCustomers";
+export * from "./seed/displayExtras";

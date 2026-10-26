@@ -1,5 +1,12 @@
 import { dealTypeSchema } from "@foodiedeals/shared";
-import { BadRequestException, Controller, Get, NotFoundException, Param, Query } from "@nestjs/common";
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Query,
+} from "@nestjs/common";
 import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from "@nestjs/swagger";
 
 import { RestaurantsService } from "./restaurants.service";

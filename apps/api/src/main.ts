@@ -12,6 +12,12 @@ import type { Env } from "./config/env.schema";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
+  const configService = app.get(ConfigService<Env, true>);
+
+  // The native apps don't need CORS; this lets the Expo web builds call the API during local dev.
+  if (process.env.NODE_ENV !== "production") {
+    app.enableCors();
+  }
 
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(new LoggingInterceptor());
@@ -24,7 +30,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("docs", app, document);
 
-  const configService = app.get(ConfigService<Env, true>);
   const port = configService.get("PORT", { infer: true });
 
   await app.listen(port);

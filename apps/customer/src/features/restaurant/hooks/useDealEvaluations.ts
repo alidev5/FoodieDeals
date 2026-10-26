@@ -10,7 +10,10 @@ export function useDealEvaluations(restaurant: Restaurant | undefined | null) {
     if (!restaurant) return [];
 
     const lines = cart.restaurantId === restaurant.id ? cart.lines : [];
-    const subtotalCents = lines.reduce((sum, line) => sum + line.menuItem.priceCents * line.quantity, 0);
+    const subtotalCents = lines.reduce(
+      (sum, line) => sum + line.menuItem.priceCents * line.quantity,
+      0,
+    );
 
     const { evaluations } = bestDeal(restaurant.deals, {
       lines,

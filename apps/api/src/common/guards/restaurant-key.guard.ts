@@ -11,7 +11,9 @@ export class RestaurantKeyGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
     const restaurantIdParam = request.params.restaurantId;
-    const restaurantId = Array.isArray(restaurantIdParam) ? restaurantIdParam[0] : restaurantIdParam;
+    const restaurantId = Array.isArray(restaurantIdParam)
+      ? restaurantIdParam[0]
+      : restaurantIdParam;
     const demoKeyHeader = request.header("x-restaurant-key");
     const demoKey = Array.isArray(demoKeyHeader) ? demoKeyHeader[0] : demoKeyHeader;
 

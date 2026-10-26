@@ -19,7 +19,8 @@ export class RestaurantOrdersController {
   @ApiOkResponse({ description: "Matching orders, newest first" })
   async list(
     @Param("restaurantId") restaurantId: string,
-    @Query(new ZodValidationPipe(orderStatusQuerySchema)) query: ReturnType<typeof orderStatusQuerySchema.parse>,
+    @Query(new ZodValidationPipe(orderStatusQuerySchema))
+    query: ReturnType<typeof orderStatusQuerySchema.parse>,
   ) {
     return this.ordersService.listForRestaurant(restaurantId, query.status);
   }
@@ -36,7 +37,8 @@ export class RestaurantOrdersController {
   @ApiOkResponse({ description: "The restaurant's new availability" })
   async setAvailability(
     @Param("restaurantId") restaurantId: string,
-    @Body(new ZodValidationPipe(setAvailabilitySchema)) body: ReturnType<typeof setAvailabilitySchema.parse>,
+    @Body(new ZodValidationPipe(setAvailabilitySchema))
+    body: ReturnType<typeof setAvailabilitySchema.parse>,
   ) {
     return this.ordersService.setAvailability(restaurantId, body.isOpen);
   }

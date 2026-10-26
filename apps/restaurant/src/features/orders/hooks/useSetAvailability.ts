@@ -9,7 +9,8 @@ export function useSetAvailability() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (isOpen: boolean) => setAvailability(session!.restaurantId, session!.demoKey, isOpen),
+    mutationFn: (isOpen: boolean) =>
+      setAvailability(session!.restaurantId, session!.demoKey, isOpen),
 
     onMutate: async (isOpen) => {
       await queryClient.cancelQueries({ queryKey: ["restaurants"] });

@@ -26,12 +26,14 @@ describe("PriceSummary", () => {
     expect(screen.getByText("-$5.60")).toBeTruthy();
     expect(screen.getByText("$1.99")).toBeTruthy();
     expect(screen.getByText("$24.39")).toBeTruthy();
-    expect(screen.getByText("$0.00 · pickup")).toBeTruthy();
+    expect(screen.getByText("$0.00 · Pickup")).toBeTruthy();
+    expect(screen.getByText("You're saving $5.60 on this order")).toBeTruthy();
   });
 
-  it("hides the deal savings row when nothing was discounted", () => {
+  it("hides the deal row and savings banner when nothing was discounted", () => {
     renderWithTheme(<PriceSummary quote={{ ...quote, discountCents: 0 }} />);
 
-    expect(screen.queryByText(/Deal savings/)).toBeNull();
+    expect(screen.queryByText(/^Deal/)).toBeNull();
+    expect(screen.queryByText(/saving/)).toBeNull();
   });
 });

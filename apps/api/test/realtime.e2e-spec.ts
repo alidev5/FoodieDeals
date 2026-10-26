@@ -1,4 +1,11 @@
-import { addLine, computeQuote, createEmptyCart, SOCKET_EVENTS, type Deal, type MenuItem } from "@foodiedeals/shared";
+import {
+  addLine,
+  computeQuote,
+  createEmptyCart,
+  SOCKET_EVENTS,
+  type Deal,
+  type MenuItem,
+} from "@foodiedeals/shared";
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { io, type Socket } from "socket.io-client";
@@ -13,6 +20,7 @@ const fakeStripeClient: StripeClient = {
   createPaymentIntent: async () => {
     throw new Error("not used in this test");
   },
+  retrievePaymentIntent: async (id) => ({ id, status: "requires_payment_method", metadata: {} }),
   constructWebhookEvent: (rawBody) => JSON.parse(rawBody.toString()),
 };
 
@@ -24,7 +32,10 @@ function waitForAck<T>(socket: Socket, event: string, payload: unknown): Promise
 
 function waitForEvent<T>(socket: Socket, event: string, timeoutMs: number): Promise<T> {
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error(`Timed out waiting for ${event}`)), timeoutMs);
+    const timeout = setTimeout(
+      () => reject(new Error(`Timed out waiting for ${event}`)),
+      timeoutMs,
+    );
     socket.once(event, (payload: T) => {
       clearTimeout(timeout);
       resolve(payload);
@@ -40,7 +51,12 @@ describe("Realtime (e2e)", () => {
   const runId = Date.now();
   const restaurantId = "e2e-realtime-restaurant";
   const demoKey = "E2E-REALTIME-0000";
-  const menuItem: MenuItem = { id: "e2e-realtime-item", restaurantId, name: "Test Dish", priceCents: 1000 };
+  const menuItem: MenuItem = {
+    id: "e2e-realtime-item",
+    restaurantId,
+    name: "Test Dish",
+    priceCents: 1000,
+  };
   const deals: Deal[] = [];
   const eventId = `evt_e2e_realtime_${runId}`;
   const paymentIntentId = `pi_e2e_realtime_${runId}`;
@@ -76,7 +92,9 @@ describe("Realtime (e2e)", () => {
         demoKey,
         cuisine: "Test",
         isOpen: true,
-        menuItems: { create: [{ id: menuItem.id, name: menuItem.name, priceCents: menuItem.priceCents }] },
+        menuItems: {
+          create: [{ id: menuItem.id, name: menuItem.name, priceCents: menuItem.priceCents }],
+        },
       },
       update: {},
     });
@@ -89,7 +107,14 @@ describe("Realtime (e2e)", () => {
       restaurantId,
       deviceId,
       pickupName: "E2E Realtime Tester",
-      items: [{ menuItemId: menuItem.id, name: menuItem.name, priceCents: menuItem.priceCents, quantity: 1 }],
+      items: [
+        {
+          menuItemId: menuItem.id,
+          name: menuItem.name,
+          priceCents: menuItem.priceCents,
+          quantity: 1,
+        },
+      ],
       subtotalCents: quote.subtotalCents,
       discountCents: quote.discountCents,
       taxCents: quote.taxCents,
@@ -103,7 +128,11 @@ describe("Realtime (e2e)", () => {
     await request(app.getHttpServer())
       .post("/payments/webhook")
       .set("stripe-signature", "test")
-      .send({ id: eventId, type: "payment_intent.succeeded", data: { object: { id: paymentIntentId, metadata } } })
+      .send({
+        id: eventId,
+        type: "payment_intent.succeeded",
+        data: { object: { id: paymentIntentId, metadata } },
+      })
       .expect(200);
   });
 
@@ -121,7 +150,9 @@ describe("Realtime (e2e)", () => {
   });
 
   it("rejects a customer joining an order room with the wrong device id", async () => {
-    const order = await prisma.order.findUniqueOrThrow({ where: { stripePaymentIntentId: paymentIntentId } });
+    const order = await prisma.order.findUniqueOrThrow({
+      where: { stripePaymentIntentId: paymentIntentId },
+    });
     const intruder = connectClient();
 
     const ack = await waitForAck<{ ok: boolean }>(intruder, SOCKET_EVENTS.joinOrderRoom, {
@@ -133,7 +164,9 @@ describe("Realtime (e2e)", () => {
   });
 
   it("delivers a restaurant action to the customer's order room within 2 seconds", async () => {
-    const order = await prisma.order.findUniqueOrThrow({ where: { stripePaymentIntentId: paymentIntentId } });
+    const order = await prisma.order.findUniqueOrThrow({
+      where: { stripePaymentIntentId: paymentIntentId },
+    });
 
     const customer = connectClient();
     const customerAck = await waitForAck<{ ok: boolean }>(customer, SOCKET_EVENTS.joinOrderRoom, {

@@ -23,14 +23,21 @@ export function LiveIndicator() {
   const dotStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: theme.spacing.xs }}>
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: theme.spacing.xs + 2,
+        backgroundColor: "rgba(255,255,255,0.16)",
+        borderRadius: theme.radius.pill,
+        paddingHorizontal: theme.spacing.md,
+        paddingVertical: theme.spacing.xs + 2,
+      }}
+    >
       <Animated.View
-        style={[
-          { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.color.success },
-          dotStyle,
-        ]}
+        style={[{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#3DDC84" }, dotStyle]}
       />
-      <Text variant="label" color="success">
+      <Text variant="label" color="onDark" style={{ fontSize: 13 }}>
         Live
       </Text>
     </View>

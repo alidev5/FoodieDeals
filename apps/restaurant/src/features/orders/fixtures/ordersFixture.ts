@@ -7,28 +7,7 @@ import {
   type OrderStatus,
 } from "@foodiedeals/shared";
 
-export interface RestaurantOrderItem {
-  name: string;
-  quantity: number;
-  priceCents: number;
-}
-
-export interface RestaurantOrder {
-  id: string;
-  restaurantId: string;
-  orderNumber: number;
-  pickupName: string;
-  status: OrderStatus;
-  createdAt: string;
-  items: RestaurantOrderItem[];
-  appliedDealName: string | null;
-  subtotalCents: number;
-  discountCents: number;
-  taxCents: number;
-  totalCents: number;
-  platformFeeCents: number;
-  restaurantReceivesCents: number;
-}
+import type { RestaurantOrder } from "../../../lib/restaurantApi";
 
 const misoEmber = SEED_RESTAURANTS.find((restaurant) => restaurant.id === "miso-ember");
 if (!misoEmber) throw new Error("fixture restaurant missing");
@@ -63,7 +42,17 @@ function buildOrder(
     pickupName,
     status,
     createdAt,
-    items: items.map((item) => ({ name: item.name, quantity: 1, priceCents: item.priceCents })),
+    acceptedAt: status === "WAITING" ? null : createdAt,
+    readyAt: status === "READY" || status === "PICKED_UP" ? createdAt : null,
+    pickedUpAt: status === "PICKED_UP" ? createdAt : null,
+    paidOutAt: null,
+    items: items.map((item) => ({
+      menuItemId: item.id,
+      name: item.name,
+      quantity: 1,
+      priceCents: item.priceCents,
+    })),
+    appliedDealId: quote.appliedDeal?.dealId ?? null,
     appliedDealName: quote.appliedDeal?.dealName ?? null,
     subtotalCents: quote.subtotalCents,
     discountCents: quote.discountCents,
@@ -80,5 +69,8 @@ export const RESTAURANT_ORDERS_FIXTURE: RestaurantOrder[] = [
   buildOrder("order-3", 11, "Devon R.", "ACCEPTED", 6, ["miso-ramen", "matcha-cheesecake"]),
   buildOrder("order-4", 10, "Jae K.", "READY", 11, ["crispy-pork-gyoza", "chili-sesame-noodles"]),
   buildOrder("order-5", 9, "Alex T.", "PICKED_UP", 40, ["miso-ramen"]),
-  buildOrder("order-6", 8, "Sam W.", "PICKED_UP", 55, ["chili-sesame-noodles", "matcha-cheesecake"]),
+  buildOrder("order-6", 8, "Sam W.", "PICKED_UP", 55, [
+    "chili-sesame-noodles",
+    "matcha-cheesecake",
+  ]),
 ];
